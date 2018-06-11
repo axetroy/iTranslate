@@ -1,0 +1,21 @@
+{
+  "apps": [
+    {
+      "name": "node-i18n-error:6099",
+      "script": "build/server.js",
+      "instances": 2,
+      "exec_mode": "cluster",
+      "env": {
+        "NODE_ENV": "production",
+        "production": false,
+        "PORT": 6099
+      },
+      "watch_options": {
+        "followSymlinks": false
+      },
+      "ignore_watch": ["node_modules"],
+      "autorestart": true,
+      "max_memory_restart": "250M"
+    }
+  ]
+}

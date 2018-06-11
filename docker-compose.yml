@@ -1,0 +1,30 @@
+version: '3'
+services:
+  # nginx 作为网关
+  nginx_static:
+    image: nginx:1.13.8-alpine
+    restart: always
+    working_dir: /home/static
+    volumes:
+       - ./nginx.conf:/etc/nginx/nginx.conf # 映射 ginx 配置文件
+    ports:
+      - 6789:80 # 绑定容器的80端口到本的1080端口
+  pg_i18n:
+    image: postgres:10.4-alpine
+    restart: always
+    volumes:
+      - "./docker/volumes/pg:/var/lib/postgresql"
+    ports:
+      - 6432:5432
+  # node:
+  #   image: keymetrics/pm2:8-alpine
+  #   user: "node"
+  #   working_dir: /home/node/app
+  #   environment:
+  #     - NODE_ENV=production
+  #   volumes:
+  #     - ./:/home/node/app
+  #   ports:
+  #     - 6099:6099
+  #   links:
+  #     - pg_i18n

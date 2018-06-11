@@ -1,0 +1,28 @@
+{
+  "apps": [
+    {
+      "name": "node-i18n-error:6099",
+      "script": "app/server.ts",
+      "instances": 1,
+      "exec_mode": "fork",
+      "interpreter": "./node_modules/.bin/ts-node",
+      "env": {
+        "NODE_ENV": "development",
+        "PORT": 6099
+      },
+      "watch": ["app"],
+      "watch_options": {
+        "followSymlinks": false
+      },
+      "ignore_watch": ["node_modules", "logs", "static", "script", ".idea", ".git", "build"],
+      "autorestart": true,
+      "max_memory_restart": "250M",
+      "listen_timeout": 8000,
+      "kill_timeout": 1600,
+      "log_date_format": "YYYY-MM-DD HH:mm:ss",
+      "pid_file": "./.temp/pid/i18n-error.pid",
+      "out_file": "./logs/pm2/i18n-error-out.log",
+      "error_file": "./logs/pm2/i18n-error-error.log"
+    }
+  ]
+}
