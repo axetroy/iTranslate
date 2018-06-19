@@ -5,15 +5,12 @@ import {
   GraphQLObjectType,
   GraphQLNonNull,
   GraphQLString,
-  GraphQLID,
   GraphQLBoolean,
-  GraphQLList,
-  GraphQLInt,
-  GraphQLInputObjectType
+  GraphQLList
 } from "graphql";
 
 import { generateListType } from "./generate-list";
-import { user } from "./user";
+import { getUserInfoFromField } from "./user";
 
 export const Repository = new GraphQLObjectType({
   name: "Repository",
@@ -21,10 +18,14 @@ export const Repository = new GraphQLObjectType({
     id: {
       type: new GraphQLNonNull(GraphQLString)
     },
-    creator: user,
-    owner: user,
+    creator: getUserInfoFromField("creator"),
+    owner: getUserInfoFromField("owner"),
     name: {
       type: new GraphQLNonNull(GraphQLString)
+    },
+    languages: {
+      type: new GraphQLNonNull(new GraphQLList(GraphQLString)),
+      description: "该仓库所支持的语言"
     },
     readme: {
       type: GraphQLString

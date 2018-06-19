@@ -66,9 +66,7 @@ async function extendContext(ctx: Koa.Context, params: any) {
     ctx.headers.authorization ||
     ctx.cookies.get("Authorization") ||
     "";
-  console.log("token....", Authorization);
-  const token = ctx["token"] = await verifyToken(Authorization);
-  console.log(token);
+  const token = (ctx["token"] = await verifyToken(Authorization));
   if (!token || !token.uid) {
     throw new Error(`Invalid token`);
   }

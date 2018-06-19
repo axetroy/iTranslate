@@ -1,4 +1,4 @@
-import { query, responseHandler } from "~/utils/graphql";
+import { query } from "~/utils/graphql";
 import token from "~/utils/auth";
 import { get } from "lodash";
 
@@ -95,7 +95,7 @@ export const actions = {
       uid: profile.uid
     });
   },
-  async logout({ commit }, payload) {
+  async logout({ commit }) {
     token.set("");
     commit("SET_USER", null);
   }

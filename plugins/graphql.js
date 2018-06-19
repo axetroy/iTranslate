@@ -7,7 +7,7 @@ Vue.prototype.$graphql = function(queryString, variables = null, options = {}) {
   return query(queryString, variables, {
     ...options,
     headers: {
-      Authorization: token.get()
+      Authorization: "Bearer " + token.get()
     }
   });
 };
@@ -20,7 +20,7 @@ export default function(context) {
       .post(
         "/",
         {
-          queryString,
+          query: queryString.trim(),
           variables
         },
         {

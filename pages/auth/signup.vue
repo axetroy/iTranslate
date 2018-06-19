@@ -24,7 +24,8 @@
 </template>
 
 <script>
-import { Message } from "element-ui";
+import { query } from "~/utils/graphql";
+
 export default {
   layout: "entry",
   data() {
@@ -59,26 +60,32 @@ export default {
     submitForm(formName) {
       this.$refs[formName].validate(valid => {
         if (valid) {
-          this.$store
-            .dispatch("signup", {
-              username: this.loginForm.username,
-              password: this.loginForm.pass
-            })
+          query(
+            `
+            mutation register($argv: RegistryArgv){
+              public{
+                registry(argv: $argv){
+                  uid
+                  username
+                  createdAt
+                  updatedAt
+                }
+              }
+            }
+          `,
+            {
+              argv: {
+                username: this.loginForm.username,
+                password: this.loginForm.pass
+              }
+            }
+          )
             .then(() => {
-              Message({
-                type: "success",
-                message: "注册成功..."
-              });
-              this.$router.push({ name: "main" });
+              this.$success("注册成功...");
             })
             .catch(err => {
-              Message({
-                type: "error",
-                message: err.message
-              });
+              this.$error(err.message);
             });
-        } else {
-          return false;
         }
       });
     }

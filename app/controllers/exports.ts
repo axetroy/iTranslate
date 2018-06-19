@@ -1,7 +1,7 @@
-import * as fs from 'fs-extra';
-import * as path from 'path';
-import { getRowList } from './row';
-import { getRepository } from './repository';
+import * as fs from "fs-extra";
+import * as path from "path";
+import { getRowList } from "./item";
+import { getRepository } from "./repository";
 
 async function getRawFile(tableId: string, ext: string) {
   const result = await getRowList({
@@ -9,7 +9,8 @@ async function getRawFile(tableId: string, ext: string) {
     keyJson: JSON.stringify({ tid: tableId })
   });
 
-  const table = await getRepository(tableId);
+  // TODO
+  const table = await getRepository("", tableId);
 
   const data = result.data;
 
@@ -24,7 +25,7 @@ async function getRawFile(tableId: string, ext: string) {
     transformer = require(`./transformer/default`);
   }
 
-  transformer = transformer['default'] ? transformer['default'] : transformer;
+  transformer = transformer["default"] ? transformer["default"] : transformer;
 
   return transformer(data, table.name);
 }
@@ -38,7 +39,7 @@ async function getRawFile(tableId: string, ext: string) {
 export async function rawMultipleFile(req, res) {
   try {
     const ext = req.params.ext;
-    const ids = req.params.ids.split(',');
+    const ids = req.params.ids.split(",");
 
     // default transform
     let transformer = function(data: any, tableName: string) {
@@ -51,13 +52,14 @@ export async function rawMultipleFile(req, res) {
       transformer = require(`./transformer/default`);
     }
 
-    transformer = transformer['default'] ? transformer['default'] : transformer;
+    transformer = transformer["default"] ? transformer["default"] : transformer;
 
     let data = [];
 
     for (let i = 0; i < ids.length; i++) {
       const tid = ids[i];
-      const table = await getRepository(tid);
+      // TODO
+      const table = await getRepository("", tid);
       const result = await getRowList({
         limit: 10000,
         keyJson: JSON.stringify({ tid })
@@ -70,11 +72,11 @@ export async function rawMultipleFile(req, res) {
       data = data.concat(result.data);
     }
 
-    const raw = transformer(data, '');
+    const raw = transformer(data, "");
 
     if (req.query.format == true) {
-      res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      res.render('code', {
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
+      res.render("code", {
         code: raw
       });
     } else {
@@ -92,8 +94,8 @@ export async function rawHandler(req, res) {
     const raw: string = await getRawFile(tid, ext);
 
     if (!!req.query.format) {
-      res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      res.render('code', {
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
+      res.render("code", {
         code: raw
       });
     } else {
@@ -108,9 +110,9 @@ export async function exportHandler(req, res) {
   const tid = req.params.tid;
   const ext = req.params.ext;
   try {
-    res.setHeader('Content-Type', 'application/octet-stream; charset=utf-8');
+    res.setHeader("Content-Type", "application/octet-stream; charset=utf-8");
 
-    const newFile: string = path.join(process.cwd(), '.temp', `${tid}.${ext}`);
+    const newFile: string = path.join(process.cwd(), ".temp", `${tid}.${ext}`);
 
     await fs.ensureFile(newFile);
 

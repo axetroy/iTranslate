@@ -3,26 +3,30 @@
  */
 import ItemModel from "../postgres/models/item.model";
 import sequelize from "../postgres/index";
-import { RFC3339NanoMaper, initQuery, sortMap } from "../utils";
+import { initQuery, sortMap } from "../utils";
 import { FormQuery$ } from "../graphql/types/formQuery";
 
 export interface CreateRowArgv$ {
   uid: string;
-  tid: string;
+  rid: string;
   key: string;
-  value_en: string;
-  value_cn: string;
-  value_tw: string;
+  value?: string;
 }
 
 export interface UpdateRowArgv$ {
   id: string;
   uid: string;
   key?: string;
-  value_en?: string;
-  value_cn?: string;
-  value_tw?: string;
+  description?: string;
+  value?: string;
   isActive?: boolean;
+}
+
+export interface UpdateTranslateArgv$ {
+  rid: string;
+  key: string;
+  language: string;
+  value: string;
 }
 
 /**
@@ -31,16 +35,24 @@ export interface UpdateRowArgv$ {
  * @returns {Promise<any>}
  */
 export async function createRow(argv: CreateRowArgv$) {
-  const { tid, uid, key, value_cn, value_en, value_tw } = argv;
+  const { rid, uid, key, value } = argv;
 
   if (/^[a-z]+$/i.test(key) !== true) {
     throw new Error(`Invalid Key, Key must be [a-z, A-Z]`);
   }
 
+  if (!rid) {
+    throw new Error(`repository id is required`);
+  }
+
+  if (!uid) {
+    throw new Error(`user id is required`);
+  }
+
   const t: any = await sequelize.transaction();
   try {
     const oldRow = await ItemModel.findOne({
-      where: { tid, uid, key },
+      where: { rid, uid, key },
       transaction: t,
       lock: t.LOCK.UPDATE
     });
@@ -51,12 +63,10 @@ export async function createRow(argv: CreateRowArgv$) {
 
     const row: any = await ItemModel.create(
       {
-        tid,
+        rid,
         uid,
         key,
-        value_en,
-        value_cn,
-        value_tw
+        value: JSON.parse(value || "{}")
       },
       {
         transaction: t
@@ -78,14 +88,17 @@ export async function createRow(argv: CreateRowArgv$) {
  * @returns {Promise<any>}
  */
 export async function updateRow(argv: UpdateRowArgv$) {
-  const { id, uid, key, value_cn, value_en, value_tw, isActive } = argv;
+  const { id, uid, key, value, description, isActive } = argv;
 
   if (key && /^[a-z]+$/i.test(key) !== true) {
     throw new Error(`Invalid Key, Key must be [a-z, A-Z]`);
   }
 
   const t: any = await sequelize.transaction();
+
   try {
+    // TODO: 校验用户是否有权限去更新
+
     const row: any = await ItemModel.findOne({
       where: { id },
       transaction: t,
@@ -96,30 +109,68 @@ export async function updateRow(argv: UpdateRowArgv$) {
       throw new Error(`No data`);
     }
 
-    // const havePermission: boolean = await hasMember(row.tid, uid);
-
-    // if (havePermission !== true) {
-    //   throw new Error(`Permission deny`);
-    // }
-
     if (key) {
       await row.update({ key }, { transaction: t, lock: t.LOCK.UPDATE });
     }
 
-    if (value_cn) {
-      await row.update({ value_cn }, { transaction: t, lock: t.LOCK.UPDATE });
+    if (value) {
+      await row.update(
+        { value: JSON.parse(value) },
+        { transaction: t, lock: t.LOCK.UPDATE }
+      );
     }
 
-    if (value_en) {
-      await row.update({ value_en }, { transaction: t, lock: t.LOCK.UPDATE });
+    if (typeof description === "string") {
+      await row.update(
+        { description },
+        { transaction: t, lock: t.LOCK.UPDATE }
+      );
     }
 
-    if (value_tw) {
-      await row.update({ value_tw }, { transaction: t, lock: t.LOCK.UPDATE });
-    }
-
-    if (isActive) {
+    if (typeof isActive === "boolean") {
       await row.update({ isActive }, { transaction: t, lock: t.LOCK.UPDATE });
+    }
+
+    await t.commit();
+
+    return row.dataValues;
+  } catch (err) {
+    await t.rollback();
+    throw err;
+  }
+}
+
+export async function updateTranslate(argv: UpdateTranslateArgv$) {
+  const { rid, key, language, value } = argv;
+
+  if (key && /^[a-z]+$/i.test(key) !== true) {
+    throw new Error(`Invalid Key, Key must be [a-z, A-Z]`);
+  }
+
+  // TODO
+  // 校验是否是合法的 language
+
+  const t: any = await sequelize.transaction();
+  try {
+    const row: any = await ItemModel.findOne({
+      where: { id: rid },
+      transaction: t,
+      lock: t.LOCK.UPDATE
+    });
+
+    if (!row) {
+      throw new Error(`No data`);
+    }
+
+    const originValue = row.dataValues.value;
+
+    if (value) {
+      const newValue = { ...originValue };
+      newValue[language] = value;
+      await row.update(
+        { value: newValue },
+        { transaction: t, lock: t.LOCK.UPDATE }
+      );
     }
 
     await t.commit();
@@ -134,18 +185,18 @@ export async function updateRow(argv: UpdateRowArgv$) {
 /**
  * 获取row
  * @param {string} uid
- * @param {string} tid
+ * @param {string} rid
  * @param {string} key
  * @returns {Promise<any>}
  */
-export async function getRow(uid: string, tid: string, key: string) {
+export async function getRow(uid: string, rid: string, key: string) {
   const t: any = await sequelize.transaction();
 
   try {
     const row: any = await ItemModel.findOne({
       where: {
         // uid,
-        tid,
+        rid,
         key,
         isActive: true
       },
@@ -186,7 +237,11 @@ export async function getRowList(query: FormQuery$) {
     });
     const rows = queryResult.rows || [];
     const count = queryResult.count || 0;
-    const data = rows.map((row: any) => row.dataValues);
+    const data = rows.map((row: any) => {
+      const d = row.dataValues;
+      d.value = JSON.stringify(d.value);
+      return d;
+    });
     result.data = data;
     result.meta = {
       page,

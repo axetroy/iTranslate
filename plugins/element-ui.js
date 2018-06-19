@@ -47,8 +47,29 @@ import {
   Checkbox,
   Tabs,
   TabPane,
-  Card
+  Card,
+  Message,
+  MessageBox,
+  Scrollbar,
+  Transfer
 } from "element-ui";
+
+// message
+Vue.prototype.$message = Vue.prototype.$message || Message;
+Vue.prototype.$success =
+  Vue.prototype.$success || Message.success.bind(Message);
+Vue.prototype.$info = Vue.prototype.$info || Message.info.bind(Message);
+Vue.prototype.$warning =
+  Vue.prototype.$warning || Message.warning.bind(Message);
+Vue.prototype.$error = Vue.prototype.$error || Message.error.bind(Message);
+
+// messageBox
+Vue.prototype.$alert =
+  Vue.prototype.$alert || MessageBox.alert.bind(MessageBox);
+Vue.prototype.$confirm =
+  Vue.prototype.$confirm || MessageBox.confirm.bind(MessageBox);
+Vue.prototype.$prompt =
+  Vue.prototype.$prompt || MessageBox.prompt.bind(MessageBox);
 
 Vue.use(Footer);
 Vue.use(Row);
@@ -91,3 +112,5 @@ Vue.use(Checkbox);
 Vue.use(Tabs);
 Vue.use(TabPane);
 Vue.use(Card);
+Vue.use(Scrollbar);
+Vue.use(Transfer);

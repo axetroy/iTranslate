@@ -7,7 +7,7 @@
   "scripts": {
     "server": "pm2 start pm2.dev.json && pm2 log",
     "build:server": "rimraf ./build && tsc -p ./ && node ./scripts/build.js && echo 'Build Done!'",
-    "dev": "PORT=6088 nuxt",
+    "dev": "./node_modules/.bin/nuxt",
     "build": "nuxt build",
     "start": "nuxt start",
     "generate": "nuxt generate",
@@ -40,7 +40,7 @@
     "koa-graphql": "^0.7.5",
     "koa-router": "^7.4.0",
     "lodash": "^4.17.4",
-    "moment": "^2.18.1",
+    "moment": "^2.22.2",
     "nuxt-edge": "^2.0.0-25468832.6578bd7",
     "pg": "^7.4.3",
     "pg-hstore": "^2.3.2",

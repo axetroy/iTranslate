@@ -17,7 +17,7 @@
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="submit">提交</el-button>
-          <el-button @click="cancel">取消</el-button>
+          <el-button @click="$router.back()">取消</el-button>
         </el-form-item>
       </el-form>
     </div>
@@ -26,7 +26,6 @@
 
 <script>
 import { query } from "~/utils/graphql";
-import { Message } from "element-ui";
 
 export default {
   middleware: ["require-login"],
@@ -59,14 +58,11 @@ export default {
         }
       )
         .then(() => {
-          Message.success(`创建成功.`);
+          this.$success(`创建成功.`);
         })
         .catch(err => {
-          Message.error(err.message);
+          this.$error(err.message);
         });
-    },
-    cancel() {
-      console.log(`取消...`);
     }
   }
 };

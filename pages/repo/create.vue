@@ -29,12 +29,17 @@
         <el-form-item label="仓库描述" required>
           <el-input v-model="form.desc"></el-input>
         </el-form-item>
+        <el-form-item label="支持的语言" required>
+          <el-checkbox-group v-model="form.languages">
+            <el-checkbox v-for="v in spportLanguages" :key="v" :label="v"></el-checkbox>
+          </el-checkbox-group>
+        </el-form-item>
         <el-form-item label="README" required>
           <el-input type="textarea" :rows="6" v-model="form.readme"></el-input>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="submit">提交</el-button>
-          <el-button @click="cancel">取消</el-button>
+          <el-button @click="$router.back()">取消</el-button>
         </el-form-item>
       </el-form>
     </div>
@@ -43,15 +48,30 @@
 
 <script>
 import { query } from "~/utils/graphql";
-import { Message } from "element-ui";
+import { get } from "lodash";
 
 export default {
   middleware: ["require-login"],
+  async asyncData({ $graphql }) {
+    const res = await $graphql(`
+      query getLanguage{
+        public{
+          languages
+        }
+      }
+    `);
+    const languages = get(res, ["data", "public", "languages"]) || [];
+    return {
+      spportLanguages: languages
+    };
+  },
   data() {
     return {
+      spportLanguages: [],
       form: {
         owner: this.$store.state.user.username,
-        visible: true
+        visible: true,
+        languages: ["en-us", "zh-cn"]
       },
       owners: [
         {
@@ -82,20 +102,18 @@ export default {
           argv: {
             name: this.form.name,
             description: this.form.desc,
+            languages: this.form.languages,
             readme: this.form.readme,
             isPrivate: !this.form.visible
           }
         }
       )
         .then(() => {
-          Message.success(`创建成功.`);
+          this.$success(`创建成功.`);
         })
         .catch(err => {
-          Message.error(err.message);
+          this.$error(err.message);
         });
-    },
-    cancel() {
-      console.log(`取消...`);
     }
   }
 };

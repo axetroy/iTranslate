@@ -42,3 +42,7 @@ h6 {
 .pull-left {
   float: left !important;
 }
+
+a {
+  text-decoration: none;
+}

@@ -5,14 +5,34 @@ import {
   GraphQLObjectType,
   GraphQLNonNull,
   GraphQLString,
-  GraphQLID,
-  GraphQLBoolean,
   GraphQLList,
-  GraphQLInt,
   GraphQLInputObjectType
 } from "graphql";
 
 import { getUserInfo } from "../../controllers/user";
+
+export function getUserInfoFromField(field = "uid") {
+  return {
+    type: new GraphQLObjectType({
+      name: "UserInfoType" + field,
+      fields: {
+        uid: {
+          type: new GraphQLNonNull(GraphQLString)
+        },
+        username: {
+          type: new GraphQLNonNull(GraphQLString)
+        },
+        nickname: {
+          type: new GraphQLNonNull(GraphQLString)
+        }
+      }
+    }),
+    async resolve(parent: any, params: any, req: any) {
+      const uid: string = parent[field];
+      return await getUserInfo(uid);
+    }
+  };
+}
 
 export const user = {
   type: new GraphQLObjectType({
@@ -31,13 +51,7 @@ export const user = {
   }),
   async resolve(parent: any, params: any, req: any) {
     const uid: string = parent.uid;
-    let userInfo = {};
-    try {
-      userInfo = await getUserInfo(uid);
-    } catch (err) {
-      console.error(err);
-    }
-    return userInfo;
+    return await getUserInfo(uid);
   }
 };
 

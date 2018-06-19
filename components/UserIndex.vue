@@ -51,7 +51,7 @@ export default {
     async getRepositories() {
       const data = await this.$graphql(`
       query repo{
-        public{
+        me{
           repositories(query: {limit: 10}){
             data{
               name
@@ -66,13 +66,9 @@ export default {
         }
       }
     `);
-      const repositories = get(data, [
-        "data",
-        "public",
-        "repositories",
-        "data"
-      ]);
-      const meta = get(data, ["data", "public", "repositories", "meta"]);
+      const entity = get(data, ["data", "me", "repositories"]);
+      const repositories = get(entity, ["data"]);
+      const meta = get(entity, ["meta"]);
       return { repositories, meta };
     },
     async getOrgs() {
@@ -92,12 +88,7 @@ export default {
         }
       }
     `);
-      const organizations = get(data, [
-        "data",
-        "me",
-        "organizations",
-        "data"
-      ]);
+      const organizations = get(data, ["data", "me", "organizations", "data"]);
       const meta = get(data, ["data", "me", "organizations", "meta"]);
       return { organizations, meta };
     }

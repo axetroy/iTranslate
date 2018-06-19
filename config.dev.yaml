@@ -2,8 +2,8 @@ name: in18err
 UID_GUEST: 11111111-1111-1111-1111-111111111111
 UID_SYSTEM: 00000000-0000-0000-0000-000000000000
 db:
-  host: localhost
+  host: postgres
   database: postgres
   username: postgres
   password: ""
-  port: 6432
+  port: 5432

@@ -57,7 +57,6 @@ export async function verifyToken(token: string): Promise<Token$> {
   token = (token || "").replace(/^Bearer\s+/, "");
   try {
     const decoded = await decryptToken(token);
-    console.log("decode", decoded);
     if (getUnixTime() > decoded.expired) {
       throw null;
     }

@@ -8,23 +8,66 @@ services:
     volumes:
        - ./nginx.conf:/etc/nginx/nginx.conf # 映射 ginx 配置文件
     ports:
-      - 6789:80 # 绑定容器的80端口到本的1080端口
-  pg_i18n:
+      - 6789:80 # 本地端口:容器端口
+  pg:
     image: postgres:10.4-alpine
     restart: always
+    # environment:
+    #   - POSTGRES_PORT=5432
+    #   - POSTGRES_USER=postgres
+    #   - POSTGRES_PASSWORD=postgres
     volumes:
-      - "./docker/volumes/pg:/var/lib/postgresql"
+      - ./docker/volumes/postgresql:/var/lib/postgresql
     ports:
-      - 6432:5432
-  # node:
-  #   image: keymetrics/pm2:8-alpine
-  #   user: "node"
-  #   working_dir: /home/node/app
-  #   environment:
-  #     - NODE_ENV=production
-  #   volumes:
-  #     - ./:/home/node/app
-  #   ports:
-  #     - 6099:6099
-  #   links:
-  #     - pg_i18n
+      - 6432:5432 # 本地端口:容器端口
+  node:
+    image: keymetrics/pm2:8-alpine
+    user: "node"
+    working_dir: /home/node/app
+    environment:
+      - NODE_ENV=production
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASENAME=postgres
+      - DB_USERNAME=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - ./:/home/node/app
+    ports:
+      - 6099:6099 # 本地端口:容器端口
+    links:
+      - pg:postgres
+    command: ["pm2-runtime", "start", "pm2.dev.json"]
+    depends_on:
+      - nginx_static
+      - pg
+  web:
+    # image: node:8-alpine
+    build:
+      context: .
+      dockerfile: ./docker/web.Dockerfile
+    user: node
+    working_dir: /home/node/app
+    environment:
+      - HOST=0.0.0.0
+      - PORT=6088
+    volumes:
+      # - .nuxt/:/home/node/app/.nuxt
+      - ./assets/:/home/node/app/assets
+      - ./components/:/home/node/app/components
+      - ./layouts/:/home/node/app/layouts
+      - ./middleware/:/home/node/app/middleware
+      - ./pages/:/home/node/app/pages
+      - ./plugins/:/home/node/app/plugins
+      - ./static/:/home/node/app/static
+      - ./store/:/home/node/app/store
+      - ./theme/:/home/node/app/theme
+      - ./utils/:/home/node/app/utils
+      - ./nuxt.config.js:/home/node/app/nuxt.config.js
+    ports:
+      - 6088:6088 # 本地端口:容器端口
+    links:
+      - node
+    command: ["npm", "run", "dev"]
+    depends_on:
+      - node

@@ -1,7 +1,7 @@
 import axios from "axios";
 
 export const http = axios.create({
-  baseURL: "http://localhost:6099/api/graphql",
+  baseURL: `http://${process.server ? "node" : "localhost"}:6099/api/graphql`,
   withCredentials: true
 });
 
@@ -22,10 +22,20 @@ export function query(query, variables = null, options) {
     .post(
       "/",
       {
-        query,
+        query: query.trim(),
         variables
       },
       options
     )
-    .then(responseHandler);
+    .then(responseHandler)
+    .catch(err => {
+      if (typeof err.response === "object" && err.response.data) {
+        const data = err.response.data;
+        if (data && data.errors) {
+          const firstError = data.errors.shift();
+          return Promise.reject(new Error(firstError.message));
+        }
+      }
+      return Promise.reject(err);
+    });
 }

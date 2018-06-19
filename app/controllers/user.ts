@@ -90,14 +90,9 @@ export async function login(argv: LoginArgv$) {
 
     const data = row.dataValues;
 
-    console.log("唯一标识符", row.uid);
-
     data.token = generateToken(row.uid);
 
     await verifyToken(data.token);
-
-    console.log(decryptToken(data.token));
-    console.log(data.token);
 
     await t.commit();
 

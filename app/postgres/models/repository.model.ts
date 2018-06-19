@@ -30,6 +30,10 @@ export default sequelize.define("repository", {
     allowNull: false,
     unique: UNIT_KEY // 联合唯一
   },
+  languages: {
+    type: Sequelize.ARRAY(Sequelize.STRING),
+    allowNull: false
+  },
   description: {
     type: Sequelize.STRING,
     allowNull: false

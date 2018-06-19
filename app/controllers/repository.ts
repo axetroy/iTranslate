@@ -9,13 +9,13 @@ import RepositoryMemberModel from "../postgres/models/repository.member.model";
 import sequelize from "../postgres/index";
 import { initQuery, sortMap } from "../utils";
 import { FormQuery$ } from "../graphql/types/formQuery";
-
-import { getUserInfoByName, getUserInfo } from "./user";
+const supportLanguages = require("../../languages.json");
 
 export interface createRepositoryArgv$ {
   uid: string; // 操作人
   owner: string; // 仓库所有者
   name: string;
+  languages: string[]; // 支持的语言
   description: string;
   isPrivate?: boolean; // 是否是私有仓库
   readme?: string; // 仓库说明
@@ -25,6 +25,7 @@ export interface UpdateRepositoryArgv$ {
   id: string;
   uid?: string;
   name?: string;
+  languages?: string[]; // 支持的语言
   description?: string;
   isPrivate?: boolean; // 是否是私有仓库
   readme?: string; // 仓库说明
@@ -32,11 +33,23 @@ export interface UpdateRepositoryArgv$ {
 }
 
 export async function createRepository(argv: createRepositoryArgv$) {
-  const { uid, owner, name, description, readme, isPrivate } = argv;
+  const { uid, owner, name, description, readme, isPrivate, languages } = argv;
 
   // 规范的校验key
   if (/^[a-z]+$/i.test(name) !== true) {
     throw new Error(`Invalid Key, Key must be [a-z, A-Z]`);
+  }
+
+  // 校验语言
+  if (!languages.length) {
+    throw new Error(`必须指定一个语言`);
+  }
+
+  // 检查是否支持该语言
+  for (const lang of languages) {
+    if (lang in supportLanguages === false) {
+      throw new Error(`Not support languages ${lang}`);
+    }
   }
 
   const t: any = await sequelize.transaction();
@@ -68,6 +81,7 @@ export async function createRepository(argv: createRepositoryArgv$) {
         owner,
         name,
         description,
+        languages,
         readme,
         isPrivate
       },
@@ -96,10 +110,24 @@ export async function createRepository(argv: createRepositoryArgv$) {
 }
 
 export async function updateRepository(argv: UpdateRepositoryArgv$) {
-  const { id, uid, name, description, isActive } = argv;
+  const { id, uid, name, description, languages, isActive, readme } = argv;
 
   if (name && /^[a-z]+$/i.test(name) !== true) {
     throw new Error(`Invalid Key, Key must be [a-z, A-Z]`);
+  }
+
+  if (languages) {
+    // 校验语言
+    if (!languages.length) {
+      throw new Error(`必须指定一个语言`);
+    }
+
+    // 检查是否支持该语言
+    for (const lang of languages) {
+      if (lang in supportLanguages === false) {
+        throw new Error(`Not support languages ${lang}`);
+      }
+    }
   }
 
   const t: any = await sequelize.transaction();
@@ -107,8 +135,9 @@ export async function updateRepository(argv: UpdateRepositoryArgv$) {
   try {
     const row: any = await RepositoryModel.findOne({
       where: {
+        // TODO: 查询条件要兼容到组织
         id,
-        uid
+        owner: uid
       },
       transaction: t,
       lock: t.LOCK.UPDATE
@@ -129,6 +158,14 @@ export async function updateRepository(argv: UpdateRepositoryArgv$) {
       );
     }
 
+    if (_.isArray(languages)) {
+      await row.update({ languages }, { transaction: t, lock: t.LOCK.UPDATE });
+    }
+
+    if (_.isString(readme)) {
+      await row.update({ readme }, { transaction: t, lock: t.LOCK.UPDATE });
+    }
+
     if (_.isBoolean(isActive)) {
       await row.update({ isActive }, { transaction: t, lock: t.LOCK.UPDATE });
     }
@@ -146,8 +183,6 @@ export async function updateRepository(argv: UpdateRepositoryArgv$) {
 
 export async function getRepository(owner: string, name: string) {
   const t: any = await sequelize.transaction();
-
-  console.log(owner, name);
 
   try {
     let user: any = await UserModel.findOne({
@@ -170,8 +205,6 @@ export async function getRepository(owner: string, name: string) {
     if (!user) {
       throw new Error(`User ${owner} is not exist!`);
     }
-
-    console.log(user.dataValues);
 
     const row: any = await RepositoryModel.findOne({
       where: {
@@ -215,8 +248,6 @@ export async function getRepositoryByUid(uid: string, name: string) {
 
     return data;
   } catch (err) {
-    console.log("发生错误，需要回滚...");
-    console.log(err);
     await t.rollback();
     throw err;
   }
