@@ -5,12 +5,14 @@ import ItemModel from "../postgres/models/item.model";
 import sequelize from "../postgres/index";
 import { initQuery, sortMap } from "../utils";
 import { FormQuery$ } from "../graphql/types/formQuery";
+import * as _ from "lodash";
 
 export interface CreateRowArgv$ {
   uid: string;
   rid: string;
   key: string;
   value?: string;
+  note?: string;
 }
 
 export interface UpdateRowArgv$ {
@@ -20,6 +22,7 @@ export interface UpdateRowArgv$ {
   description?: string;
   value?: string;
   isActive?: boolean;
+  note?: boolean;
 }
 
 export interface UpdateTranslateArgv$ {
@@ -88,7 +91,7 @@ export async function createRow(argv: CreateRowArgv$) {
  * @returns {Promise<any>}
  */
 export async function updateRow(argv: UpdateRowArgv$) {
-  const { id, uid, key, value, description, isActive } = argv;
+  const { id, uid, key, value, description, isActive, note } = argv;
 
   if (key && /^[a-z]+$/i.test(key) !== true) {
     throw new Error(`Invalid Key, Key must be [a-z, A-Z]`);
@@ -109,26 +112,30 @@ export async function updateRow(argv: UpdateRowArgv$) {
       throw new Error(`No data`);
     }
 
-    if (key) {
+    if (_.isString(key)) {
       await row.update({ key }, { transaction: t, lock: t.LOCK.UPDATE });
     }
 
-    if (value) {
+    if (_.isString(value)) {
       await row.update(
         { value: JSON.parse(value) },
         { transaction: t, lock: t.LOCK.UPDATE }
       );
     }
 
-    if (typeof description === "string") {
+    if (_.isString(description)) {
       await row.update(
         { description },
         { transaction: t, lock: t.LOCK.UPDATE }
       );
     }
 
-    if (typeof isActive === "boolean") {
+    if (_.isBoolean(isActive)) {
       await row.update({ isActive }, { transaction: t, lock: t.LOCK.UPDATE });
+    }
+
+    if (_.isString(note)) {
+      await row.update({ note }, { transaction: t, lock: t.LOCK.UPDATE });
     }
 
     await t.commit();

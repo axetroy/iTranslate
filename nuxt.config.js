@@ -58,7 +58,8 @@ module.exports = {
 
   plugins: [
     { src: "~plugins/element-ui", ssr: true },
-    { src: "~plugins/graphql", ssr: true }
+    { src: "~plugins/graphql", ssr: true },
+    { src: "~plugins/date-filter", ssr: true }
   ],
   css: ["~assets/css/main.css"]
 };

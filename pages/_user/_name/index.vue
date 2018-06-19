@@ -40,10 +40,10 @@
       <el-table-column prop="key" label="Key" width="100px"/>
       <el-table-column label="最近更新" width="180px">
         <template slot-scope="scope">
-          {{scope.row.updatedAt}}
+          {{scope.row.updatedAt | date}}
         </template>
       </el-table-column>
-      <el-table-column prop="desc" label="描述" width="200px">
+      <el-table-column label="描述" width="200px">
         <template slot-scope="scope">
           <span v-if="scope.row.id && editingDescId===scope.row.id">
             <el-input size="small" class="editor"
@@ -51,21 +51,21 @@
               v-model="editingDesc"
               type="text"
               @keyup.enter.native="updateDesc(scope.row.id, editingDesc)"
-              @blur="cancelEdit"/>
+              @blur="cancelEditDesc"/>
           </span>
           <span v-else>
-            <i class="el-icon-edit" @click="editDesc(scope.row.id, scope.row.desc)"/>
-            {{scope.row.desc}}
+            <i class="el-icon-edit" @click="editDesc(scope.row.id, scope.row.description)"/>
+            {{scope.row.description}}
           </span>
         </template>
       </el-table-column>
-      <el-table-column label="翻译">
+      <el-table-column label="翻译" width="300px">
         <template slot-scope="scope">
-          <div v-for="(value, lang) in scope.row.value" :key="lang">
-            <strong>{{lang}}</strong>: 
+          <div v-for="lang in repo.languages" :key="lang">
+            <strong class="lang">{{lang}}: </strong>
             <span v-if="editing !== scope.row.id + '.' + lang">
-              <i class="el-icon-edit" @click="editField(lang, value, scope.row.id)"/>
-              {{value}}
+              <i class="el-icon-edit" @click="editField(lang, scope.row.value[lang], scope.row.id)"/>
+              {{scope.row.value[lang]}}
               </span>
             <span v-else>
               <el-input size="small" class="editor"
@@ -104,6 +104,7 @@ async function getRows($graphql, repoId) {
               key
               code
               value
+              description
               createdAt
               updatedAt
               isActive
@@ -117,13 +118,9 @@ async function getRows($graphql, repoId) {
     }
   );
 
-  const layout = "YYYY-MM-DD HH:mm:ss";
-
   const rows = (get(rowsReponse, ["data", "me", "rows", "data"]) || []).map(
     v => {
       v.value = JSON.parse(v.value);
-      v.createdAt = moment(v.createdAt).format(layout);
-      v.updatedAt = moment(v.updatedAt).format(layout);
       return v;
     }
   );
@@ -140,6 +137,7 @@ export default {
   },
   data() {
     return {
+      moment: moment,
       createForm: { value: {} },
       dialogVisible: false,
       // 正在编辑的语言
@@ -147,7 +145,7 @@ export default {
       editingValue: "",
       currentLanguage: "",
 
-      // 正在标记的描述
+      // 正在编辑的描述
       editingDescId: "",
       editingDesc: "",
       rows: []
@@ -225,7 +223,7 @@ export default {
         }
       )
         .then(() => {
-          this.$success(`更新成功`);
+          this.$success(`删除成功`);
           return getRows(this.$graphql, this.repo.id);
         })
         .then(rows => {
@@ -235,34 +233,39 @@ export default {
           this.$error(err.message);
         });
     },
+    // 编辑描述
     editDesc(id, desc) {
       this.editingDescId = id;
       this.editingDesc = desc;
     },
-    updateDesc(id, desc) {
-      this.$graphql(
-        `
+    // 更新描述
+    async updateDesc(id, description) {
+      try {
+        await this.$graphql(
+          `
         mutation updateItem($argv: UpdateRowArgv){
           me{
             updateRow(argv: $argv){
               id
+              description
             }
           }
         }
       `,
-        {
-          argv: {
-            id,
-            description: desc
+          {
+            argv: {
+              id,
+              description
+            }
           }
-        }
-      )
-        .then(() => {
-          this.$success(`更新成功`);
-        })
-        .catch(err => {
-          this.$error(err.message);
-        });
+        );
+        this.$success(`更新成功`);
+        const row = this.rows.find(v => v.id === id);
+        row.description = description;
+        this.cancelEditDesc();
+      } catch (err) {
+        this.$error(err.message);
+      }
     },
     // 编辑对应的语言信息
     editField(lang, value, id) {
@@ -270,36 +273,40 @@ export default {
       this.editingValue = value;
     },
     // 更新翻译字段
-    updateField(key, id, lang, value) {
-      this.$graphql(
-        `
+    async updateField(key, id, lang, value) {
+      try {
+        await this.$graphql(
+          `
         mutation ($id: ID!, $key: String!, $language: String!, $value: String!){
           me{
             updateItem(rid: $id, key: $key, language: $language, value: $value)
           }
         }
       `,
-        {
-          id,
-          key,
-          language: lang,
-          value
-        }
-      )
-        .then(() => {
-          this.$success(`更新成功`);
-          const row = this.rows.find(v => v.id === id);
-          row.value[lang] = value;
-          this.editing = "";
-        })
-        .catch(err => {
-          this.$error(err.message);
-        });
+          {
+            id,
+            key,
+            language: lang,
+            value
+          }
+        );
+
+        this.$success(`更新成功`);
+        const row = this.rows.find(v => v.id === id);
+        row.value[lang] = value;
+        this.cancelEditField();
+      } catch (err) {
+        this.$error(err.message);
+      }
     },
     // 撤销编辑翻译
     cancelEditField() {
       this.editingValue = "";
       this.editing = "";
+    },
+    cancelEditDesc() {
+      this.editingDescId = "";
+      this.editingDesc = "";
     }
   },
   async mounted() {
@@ -337,13 +344,18 @@ export default {
 .meta {
   margin: 1rem 0;
   .desc {
-    // margin: 1rem 0;
     color: #333333;
   }
 }
 
 .repo-info {
   text-align: center;
+}
+
+.lang {
+  width: 6rem;
+  display: inline-block;
+  text-align: right;
 }
 </style>
 

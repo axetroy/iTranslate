@@ -24,6 +24,10 @@ export const RowType = new GraphQLObjectType({
       type: new GraphQLNonNull(GraphQLString),
       description: "关键字"
     },
+    description: {
+      type: GraphQLString,
+      description: "描述"
+    },
     code: {
       type: new GraphQLNonNull(GraphQLInt),
       description: "翻译码"

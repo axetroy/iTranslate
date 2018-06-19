@@ -46,6 +46,11 @@ export default sequelize.define("row", {
     allowNull: true,
     defaultValue: ""
   },
+  description: {
+    type: Sequelize.STRING,
+    allowNull: true,
+    defaultValue: ""
+  },
   isActive: {
     type: Sequelize.BOOLEAN,
     allowNull: true,

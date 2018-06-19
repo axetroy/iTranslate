@@ -92,10 +92,11 @@ export default {
     };
   },
   methods: {
-    update() {
+    async update() {
       const form = this.form;
-      this.$graphql(
-        `
+      try {
+        const res = await this.$graphql(
+          `
         mutation updateRepo($argv: UpdateRepositoryArgv){
           me{
             updateRepository(argv: $argv){
@@ -110,21 +111,20 @@ export default {
           }
         }
       `,
-        {
-          argv: {
-            id: this.repo.id,
-            name: form.name,
-            description: form.description,
-            languages: form.languages
+          {
+            argv: {
+              id: this.repo.id,
+              name: form.name,
+              description: form.description,
+              languages: form.languages
+            }
           }
-        }
-      )
-        .then(() => {
-          this.$success(`更新成功`);
-        })
-        .catch(err => {
-          this.$error(err.message);
-        });
+        );
+        const repo = get(res, ["data", "me", "updateRepository"]);
+        this.$success(`更新成功`);
+      } catch (err) {
+        this.$error(err.message);
+      }
     }
   }
 };
