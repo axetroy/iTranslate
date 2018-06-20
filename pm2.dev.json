@@ -7,8 +7,7 @@
       "exec_mode": "fork",
       "interpreter": "./node_modules/.bin/ts-node",
       "env": {
-        "NODE_ENV": "development",
-        "PORT": 6099
+        "NODE_ENV": "development"
       },
       "watch": ["app"],
       "watch_options": {

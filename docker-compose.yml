@@ -1,14 +1,16 @@
 version: '3'
 services:
-  # nginx 作为网关
-  nginx_static:
+  nginx_proxy:
     image: nginx:1.13.8-alpine
     restart: always
     working_dir: /home/static
     volumes:
-       - ./nginx.conf:/etc/nginx/nginx.conf # 映射 ginx 配置文件
+       - ./docker/nginx.conf:/etc/nginx/nginx.conf # 映射 ginx 配置文件
     ports:
-      - 6789:80 # 本地端口:容器端口
+      - 9066:80 # 绑定容器的80端口到本的1080端口
+    links:
+      - web:web.host
+      - node:api.host
   pg:
     image: postgres:10.4-alpine
     restart: always
@@ -31,18 +33,15 @@ services:
       - DB_DATABASENAME=postgres
       - DB_USERNAME=postgres
       - POSTGRES_PASSWORD=postgres
+      - PORT=8080
     volumes:
       - ./:/home/node/app
-    ports:
-      - 6099:6099 # 本地端口:容器端口
     links:
       - pg:postgres
     command: ["pm2-runtime", "start", "pm2.dev.json"]
     depends_on:
-      - nginx_static
       - pg
   web:
-    # image: node:8-alpine
     build:
       context: .
       dockerfile: ./docker/web.Dockerfile
@@ -50,9 +49,8 @@ services:
     working_dir: /home/node/app
     environment:
       - HOST=0.0.0.0
-      - PORT=6088
+      - PORT=8080
     volumes:
-      # - .nuxt/:/home/node/app/.nuxt
       - ./assets/:/home/node/app/assets
       - ./components/:/home/node/app/components
       - ./layouts/:/home/node/app/layouts
@@ -64,10 +62,8 @@ services:
       - ./theme/:/home/node/app/theme
       - ./utils/:/home/node/app/utils
       - ./nuxt.config.js:/home/node/app/nuxt.config.js
-    ports:
-      - 6088:6088 # 本地端口:容器端口
     links:
-      - node
+      - node:api.host
     command: ["npm", "run", "dev"]
     depends_on:
       - node

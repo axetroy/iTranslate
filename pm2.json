@@ -7,8 +7,7 @@
       "exec_mode": "cluster",
       "env": {
         "NODE_ENV": "production",
-        "production": false,
-        "PORT": 6099
+        "production": false
       },
       "watch_options": {
         "followSymlinks": false
