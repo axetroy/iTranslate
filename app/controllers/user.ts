@@ -6,6 +6,7 @@ import UserModel from "../postgres/models/user.model";
 import sequelize from "../postgres/index";
 import { md5, RFC3339NanoMaper, initQuery, sortMap } from "../utils";
 import { FormQuery$ } from "../graphql/types/formQuery";
+import * as Sequelize from "sequelize";
 
 // service
 import { generateToken, verifyToken, decryptToken } from "../service/jwt";
@@ -205,4 +206,29 @@ export async function updateUserInfo(argv: UpdateUserArgv$) {
     await t.rollback();
     throw err;
   }
+}
+
+export async function searchUser(username: string) {
+  const result: any = {};
+  const queryResult: any = await UserModel.findAndCountAll({
+    where: {
+      username: {
+        [Sequelize.Op.like]: "%" + username + "%"
+      }
+    }
+  });
+  const rows = queryResult.rows || [];
+  const count = queryResult.count || 0;
+  const data = rows.map((row: any) => row.dataValues);
+  result.data = data;
+  result.meta = {
+    page: 0,
+    limit: 0,
+    skip: 0,
+    count,
+    num: data.length,
+    sort: "",
+    keyJson: ""
+  };
+  return result;
 }

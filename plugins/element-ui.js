@@ -51,7 +51,8 @@ import {
   Message,
   MessageBox,
   Scrollbar,
-  Transfer
+  Transfer,
+  Autocomplete
 } from "element-ui";
 
 // message
@@ -114,3 +115,4 @@ Vue.use(TabPane);
 Vue.use(Card);
 Vue.use(Scrollbar);
 Vue.use(Transfer);
+Vue.use(Autocomplete);

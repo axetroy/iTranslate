@@ -9,6 +9,7 @@ import {
   GraphQLInputObjectType
 } from "graphql";
 
+import { generateListType } from "./generate-list";
 import { getUserInfo } from "../../controllers/user";
 
 export function getUserInfoFromField(field = "uid") {
@@ -78,6 +79,8 @@ export const UserType = new GraphQLObjectType({
     }
   }
 });
+
+export const UserListType = generateListType(UserType);
 
 export const LoginType = new GraphQLObjectType({
   name: "LoginType",

@@ -30,9 +30,16 @@
         <p class="pannel-title">合作者</p>
       </div>
       <div class="pannel-content">
-        <el-form ref="form" :model="form" label-width="120px">
+        <el-form ref="collaboration" :model="collaboration" label-width="120px">
+          <el-form-item label="用户名" required>
+            <el-autocomplete
+              v-model="collaboration.username"
+              :fetch-suggestions="querySearchAsync"
+              placeholder="请搜索用户名"
+            />
+          </el-form-item>
           <el-form-item>
-            <el-button type="primary">更新设置</el-button>
+            <el-button type="primary" @click="addCollaboration">添加协作者</el-button>
           </el-form-item>
         </el-form>
       </div>
@@ -41,13 +48,59 @@
 </template>
 
 <script>
+import { get } from "lodash";
+
 export default {
   data() {
     return {
-      form: {}
+      collaboration: {},
+      restaurants: [],
+      state4: "",
+      timeout: null
     };
   },
-  methods: {}
+  methods: {
+    // 搜索
+    querySearchAsync(queryString, cb) {
+      this.$graphql(
+        `
+        query search ($keyword: String!){
+          me{
+            searchUser(username: $keyword){
+              data{
+                username
+                uid
+              }
+              meta{
+                num
+                count
+                limit
+                count
+              }
+            }
+          }
+        }
+      `,
+        {
+          keyword: queryString
+        }
+      ).then(res => {
+        const userList = get(res, ["data", "me", "searchUser", "data"]) || [];
+        cb(
+          userList.map(v => {
+            return {
+              value: v.username,
+              user: v
+            };
+          })
+        );
+      });
+    },
+    // 添加协作者
+    addCollaboration() {
+      this.$graphql(``);
+    }
+  }
 };
 </script>
 

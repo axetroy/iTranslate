@@ -1,7 +1,7 @@
 {
   "apps": [
     {
-      "name": "node-i18n-error:6099",
+      "name": "node-dev",
       "script": "app/server.ts",
       "instances": 1,
       "exec_mode": "fork",

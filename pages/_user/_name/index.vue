@@ -1,5 +1,5 @@
 <template>
-  <div class="container">
+  <div class="container repo-index">
     <el-row>
       <el-col class="repo-info" :span="8">提交历史</el-col>
       <el-col class="repo-info" :span="8">代码分支</el-col>
@@ -315,6 +315,15 @@ export default {
   }
 };
 </script>
+
+<style lang="less">
+.repo-index {
+  .el-dialog {
+    min-width: 46rem;
+  }
+}
+</style>
+
 
 <style lang="less">
 .editor {

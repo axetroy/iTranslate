@@ -1,7 +1,7 @@
 {
   "apps": [
     {
-      "name": "node-i18n-error:6099",
+      "name": "node",
       "script": "build/server.js",
       "instances": 2,
       "exec_mode": "cluster",
