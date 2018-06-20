@@ -51,6 +51,7 @@
 import { get } from "lodash";
 
 export default {
+  props: ["repo"],
   data() {
     return {
       collaboration: {},
@@ -62,6 +63,9 @@ export default {
   methods: {
     // 搜索
     querySearchAsync(queryString, cb) {
+      if (!queryString) {
+        return;
+      }
       this.$graphql(
         `
         query search ($keyword: String!){
@@ -98,7 +102,32 @@ export default {
     },
     // 添加协作者
     addCollaboration() {
-      this.$graphql(``);
+      const collaboration = this.collaboration;
+      const repo = this.repo;
+      this.$graphql(
+        `
+        mutation addCollaborator($username: String!, $repoId: String!){
+          me{
+            addCollaborator(username: $username, repoId: $repoId){
+              user{
+                username
+                uid
+              }
+            }
+          }
+        }
+      `,
+        {
+          username: collaboration.username,
+          repoId: repo.id
+        }
+      )
+        .then(() => {
+          this.$success(`添加成功`);
+        })
+        .catch(err => {
+          this.$error(err.message);
+        });
     }
   }
 };

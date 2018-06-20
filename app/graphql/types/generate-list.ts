@@ -1,9 +1,9 @@
 /**
  * Created by axetroy on 17-7-14.
  */
-import { GraphQLType, GraphQLObjectType, GraphQLList } from 'graphql';
+import { GraphQLType, GraphQLObjectType, GraphQLList } from "graphql";
 
-import MetaType from './meta';
+import MetaType from "./meta";
 
 /**
  * 生成列表的类型
@@ -11,15 +11,15 @@ import MetaType from './meta';
  */
 export function generateListType(item: GraphQLType): GraphQLObjectType {
   return new GraphQLObjectType({
-    name: item['name'] + 'List',
+    name: item["name"] + "List",
     fields: {
       data: {
         type: new GraphQLList(item),
-        description: 'Data list'
+        description: "数据列表"
       },
       meta: {
         type: MetaType,
-        description: 'The meta information for the list'
+        description: "元信息"
       }
     }
   });

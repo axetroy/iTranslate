@@ -8,15 +8,17 @@ import {
   GraphQLList,
   GraphQLNonNull,
   GraphQLString,
-  GraphQLID,
-  GraphQLObjectType
+  GraphQLID
 } from "graphql";
 import * as Koa from "koa";
+import { Repository } from "../types/repository";
+import { Member } from "../types/member";
+
 import {
   createRepository,
-  updateRepository
+  updateRepository,
+  AddCollaborator
 } from "../../controllers/repository";
-import { Repository } from "../types/repository";
 
 export default {
   Public: {},
@@ -59,9 +61,9 @@ export default {
           })
         }
       },
-      async resolve(root: any, { argv }: any, req: any) {
+      async resolve(root: any, { argv }: any, ctx: Koa.Context) {
         const { name, owner, description, languages, isPrivate, readme } = argv;
-        const token = req.token;
+        const token = ctx["token"];
         return await createRepository({
           uid: token.uid,
           owner: owner || token.uid,
@@ -111,15 +113,6 @@ export default {
       async resolve(root: any, { argv }: any, ctx: Koa.Context) {
         const { id, name, description, languages, isActive, readme } = argv;
         const token = ctx["token"];
-        console.log(
-          id,
-          token.uid,
-          name,
-          description,
-          languages,
-          isActive,
-          readme
-        );
         return await updateRepository({
           id,
           uid: token.uid,
@@ -128,6 +121,33 @@ export default {
           languages,
           isActive,
           readme
+        });
+      }
+    },
+    addCollaborator: {
+      type: Member,
+      description: "添加项目成员",
+      args: {
+        username: {
+          type: new GraphQLNonNull(GraphQLString),
+          description: "用户名"
+        },
+        repoId: {
+          type: new GraphQLNonNull(GraphQLString),
+          description: "仓库ID"
+        }
+      },
+      async resolve(root: any, params: any, ctx: Koa.Context) {
+        const username: string = params.username;
+        const repoId: string = params.repoId;
+        const token = ctx["token"];
+        console.log(token);
+        console.log(username);
+        console.log(repoId);
+        return AddCollaborator({
+          uid: token.uid,
+          username,
+          repoId
         });
       }
     }

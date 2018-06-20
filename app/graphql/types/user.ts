@@ -6,28 +6,31 @@ import {
   GraphQLNonNull,
   GraphQLString,
   GraphQLList,
-  GraphQLInputObjectType
+  GraphQLInputObjectType,
+  GraphQLID
 } from "graphql";
 
 import { generateListType } from "./generate-list";
 import { getUserInfo } from "../../controllers/user";
 
+const userInfoType = new GraphQLObjectType({
+  name: "UserInfoType",
+  fields: {
+    uid: {
+      type: new GraphQLNonNull(GraphQLID)
+    },
+    username: {
+      type: new GraphQLNonNull(GraphQLString)
+    },
+    nickname: {
+      type: new GraphQLNonNull(GraphQLString)
+    }
+  }
+});
+
 export function getUserInfoFromField(field = "uid") {
   return {
-    type: new GraphQLObjectType({
-      name: "UserInfoType" + field,
-      fields: {
-        uid: {
-          type: new GraphQLNonNull(GraphQLString)
-        },
-        username: {
-          type: new GraphQLNonNull(GraphQLString)
-        },
-        nickname: {
-          type: new GraphQLNonNull(GraphQLString)
-        }
-      }
-    }),
+    type: userInfoType,
     async resolve(parent: any, params: any, req: any) {
       const uid: string = parent[field];
       return await getUserInfo(uid);

@@ -2,6 +2,8 @@ FROM node:8-alpine
 
 USER node
 
+RUN npm install pm2 -g
+
 RUN mkdir -p /home/node/app
 RUN chown node /home/node/app
 
