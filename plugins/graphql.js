@@ -2,12 +2,14 @@ import Vue from "vue";
 import { http, query, responseHandler } from "../utils/graphql";
 import token from "../utils/auth";
 
+const authType = "Bearer";
+
 // client side
 Vue.prototype.$graphql = function(queryString, variables = null, options = {}) {
   return query(queryString, variables, {
     ...options,
     headers: {
-      Authorization: "Bearer " + token.get()
+      Authorization: `${authType} ${token.get()}`
     }
   });
 };
@@ -26,7 +28,7 @@ export default function(context) {
         {
           ...options,
           headers: {
-            Authorization: token.get(req)
+            Authorization: `${authType} ${token.get(req)}`
           }
         }
       )
