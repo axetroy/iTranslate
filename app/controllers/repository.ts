@@ -397,6 +397,19 @@ export async function AddCollaborator(argv: AddCollaboratorArgv$) {
       throw new Error(`你没有权限这么做..`);
     }
 
+    // 查找看看是否已有这个成员存在
+    if (
+      await RepositoryMemberModel.findOne({
+        where: {
+          uid: collaborator.uid,
+          repoId: repo.id
+        },
+        transaction: t
+      })
+    ) {
+      throw new Error(`该用户已是项目成员`);
+    }
+
     // 添加组织成员
     const newMember: any = await RepositoryMemberModel.create(
       {
