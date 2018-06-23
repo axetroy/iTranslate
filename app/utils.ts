@@ -1,10 +1,10 @@
 /**
  * Created by axetroy on 17-7-14.
  */
-const crypto = require('crypto');
-import * as _ from 'lodash';
-import * as moment from 'moment';
-import { FormQuery$ } from './graphql/types/formQuery';
+import * as crypto from "crypto";
+import * as _ from "lodash";
+import * as moment from "moment";
+import { FormQuery$ } from "./graphql/types/formQuery";
 
 interface Query$ {
   limit: number;
@@ -42,8 +42,8 @@ export function initQuery(query: FormQuery$): Query$ {
   page = _.isNumber(page) ? page : 0;
   limit = _.isNumber(limit) ? limit : 10;
   skip = _.isNumber(skip) ? skip : 0;
-  sort = _.isArray(sort) ? sort : ['-createdAt'];
-  keyJson = _.isString(keyJson) && !_.isEmpty(keyJson) ? keyJson : '{}';
+  sort = _.isArray(sort) ? sort : ["-createdAt"];
+  keyJson = _.isString(keyJson) && !_.isEmpty(keyJson) ? keyJson : "{}";
   let songo = {};
   try {
     songo = JSON.parse(keyJson);
@@ -61,18 +61,22 @@ export function initQuery(query: FormQuery$): Query$ {
 export function sortMap(sort: string[]): (string[])[] {
   return sort.map((s: string) => {
     const sortArray: string[] = s.match(/^([\+\-])(\w+)$/) || [];
-    const sortDir: string | null = sortArray[1] || '+';
+    const sortDir: string | null = sortArray[1] || "+";
     const sortField: string | null = sortArray[2];
     // ASC 按升排序
     // DESC 按降排序
-    return [sortField, sortDir === '+' ? 'ASC' : 'DESC'];
+    return [sortField, sortDir === "+" ? "ASC" : "DESC"];
   });
 }
 
 export function interval(func: Function, ms: number) {
   let timer = setTimeout(function repeat() {
     const response = func();
-    if (response && _.isFunction(response.then) && _.isFunction(response.catch)) {
+    if (
+      response &&
+      _.isFunction(response.then) &&
+      _.isFunction(response.catch)
+    ) {
       response
         .then(() => {
           timer = setTimeout(repeat, ms);
@@ -111,9 +115,9 @@ export async function sleep(ms: number): Promise<any> {
  */
 export function md5(str: string): string {
   return crypto
-    .createHash('md5')
+    .createHash("md5")
     .update(str)
-    .digest('hex');
+    .digest("hex");
 }
 
 /**

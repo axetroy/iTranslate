@@ -2,15 +2,14 @@
  * Created by axetroy on 17-7-19.
  */
 import * as _ from "lodash";
-import UserModel from "../postgres/models/user.model";
-import OrganizationModel from "../postgres/models/organization.model";
-import RepositoryModel from "../postgres/models/repository.model";
-import RepositoryMemberModel from "../postgres/models/repository.member.model";
-import sequelize from "../postgres/index";
-import { initQuery, sortMap } from "../utils";
 import { FormQuery$ } from "../graphql/types/formQuery";
-import organizationMemberModel from "../postgres/models/organization.member.model";
-import { defer } from "bluebird";
+import { RepositoryRole } from "../graphql/types/member";
+import sequelize from "../postgres/index";
+import OrganizationModel from "../postgres/models/organization.model";
+import RepositoryMemberModel from "../postgres/models/repository.member.model";
+import RepositoryModel from "../postgres/models/repository.model";
+import UserModel from "../postgres/models/user.model";
+import { initQuery, sortMap } from "../utils";
 const supportLanguages = require("../../languages.json");
 
 export interface createRepositoryArgv$ {
@@ -32,18 +31,6 @@ export interface UpdateRepositoryArgv$ {
   isPrivate?: boolean; // 是否是私有仓库
   readme?: string; // 仓库说明
   isActive?: boolean;
-}
-
-export interface AddCollaboratorArgv$ {
-  uid: string;
-  username: string;
-  repoId: string;
-}
-
-export enum RepoRole {
-  User = "user",
-  Admin = "admin",
-  Owner = "owner"
 }
 
 export async function createRepository(argv: createRepositoryArgv$) {
@@ -107,7 +94,7 @@ export async function createRepository(argv: createRepositoryArgv$) {
       {
         uid: owner,
         repoId: row.id,
-        role: RepoRole.Owner
+        role: RepositoryRole.Owner
       },
       { transaction: t }
     );
@@ -300,133 +287,6 @@ export async function getRepositories(query: FormQuery$, filter = {}) {
     };
     return result;
   } catch (err) {
-    throw err;
-  }
-}
-
-/**
- * 添加新成员
- * @param argv
- */
-export async function AddCollaborator(argv: AddCollaboratorArgv$) {
-  const { uid, username, repoId } = argv;
-  const t = await sequelize.transaction();
-  try {
-    // 检查用户是否存在
-    const [operator, collaborator, repo]: any[] = await Promise.all([
-      UserModel.findOne({
-        where: { uid },
-        transaction: t,
-        lock: t.LOCK.UPDATE
-      }),
-      UserModel.findOne({
-        where: { username },
-        transaction: t,
-        lock: t.LOCK.UPDATE
-      }),
-      RepositoryModel.findOne({
-        where: { id: repoId },
-        transaction: t,
-        lock: t.LOCK.UPDATE
-      })
-    ]);
-
-    if (!operator || !collaborator) {
-      throw new Error(`User not exist`);
-    }
-
-    if (!repo) {
-      throw new Error(`repo not exist`);
-    }
-
-    async function checkPermission(): Promise<boolean> {
-      // 操作人是项目拥有者，理应有权限
-      if (repo.owner === uid) {
-        return true;
-      }
-
-      // 查看看用户是否是这个项目的管理员
-      if (
-        await RepositoryMemberModel.findOne({
-          where: {
-            repoId: repo.id,
-            uid,
-            role: RepoRole.Admin
-          },
-          transaction: t,
-          lock: t.LOCK.UPDATE
-        })
-      ) {
-        return true;
-      }
-
-      // 看看中国仓库是不是组织所有
-      const repoOrg: any = await OrganizationModel.findOne({
-        where: { id: repo.owner },
-        transaction: t,
-        lock: t.LOCK.UPDATE
-      });
-
-      // 这里找不到组织
-      // 说明项目是个人项目
-      // 而操作者又不是这个个人项目的管理员，理应抛出没有权限的错误
-      if (!repoOrg) {
-        return false;
-      }
-
-      // 如果项目是组织所有
-      // 检查用户在不在组织内，并且也是管理员
-      if (
-        await organizationMemberModel.findOne({
-          where: { uid, orgId: repoOrg.id, role: RepoRole.Admin },
-          transaction: t,
-          lock: t.LOCK.UPDATE
-        })
-      ) {
-        return true;
-      }
-
-      // 所有情况都没有捕捉的情况下
-      // 建议返回false
-      // 没有权限操作，保险起见
-      return false;
-    }
-
-    // 验证操作者是否拥有权限
-    if ((await checkPermission()) === false) {
-      throw new Error(`你没有权限这么做..`);
-    }
-
-    // 查找看看是否已有这个成员存在
-    if (
-      await RepositoryMemberModel.findOne({
-        where: {
-          uid: collaborator.uid,
-          repoId: repo.id
-        },
-        transaction: t
-      })
-    ) {
-      throw new Error(`该用户已是项目成员`);
-    }
-
-    // 添加组织成员
-    const newMember: any = await RepositoryMemberModel.create(
-      {
-        uid: collaborator.uid,
-        repoId: repo.id,
-        role: RepoRole.User
-      },
-      {
-        transaction: t
-      }
-    );
-
-    await t.commit();
-
-    return newMember.dataValues;
-  } catch (err) {
-    await t.rollback();
     throw err;
   }
 }

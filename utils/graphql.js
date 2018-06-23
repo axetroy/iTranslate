@@ -29,7 +29,6 @@ export function query(query, variables = null, options) {
     )
     .then(responseHandler)
     .catch(err => {
-      console.log(err.response);
       if (typeof err.response === "object" && err.response.data) {
         const data = err.response.data;
         if (data && data.errors) {

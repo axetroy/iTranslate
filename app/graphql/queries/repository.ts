@@ -1,15 +1,17 @@
 /**
  * Created by axetroy on 17-7-13.
  */
+import { GraphQLNonNull, GraphQLString } from "graphql";
 import * as Koa from "koa";
-import { GraphQLBoolean, GraphQLNonNull, GraphQLString } from "graphql";
+import { getCollaboratorsByRepoName } from "../../controllers/collaborator";
 import {
+  getRepositories,
   getRepository,
-  getRepositoryByUid,
-  getRepositories
+  getRepositoryByUid
 } from "../../controllers/repository";
-import { Repository, Repositories } from "../types/repository";
 import { FormQuery } from "../types/formQuery";
+import { Members } from "../types/member";
+import { Repositories, Repository } from "../types/repository";
 
 export default {
   Public: {
@@ -40,6 +42,28 @@ export default {
       },
       async resolve(root: any, params: any, req: any) {
         return await getRepositories(params.query);
+      }
+    },
+    collaborators: {
+      type: Members,
+      description: "获取项目的成员",
+      args: {
+        owner: {
+          type: new GraphQLNonNull(GraphQLString),
+          description: "仓库所有者"
+        },
+        name: {
+          type: new GraphQLNonNull(GraphQLString),
+          description: "仓库名称"
+        },
+        query: {
+          name: "query",
+          type: new GraphQLNonNull(FormQuery)
+        }
+      },
+      async resolve(root: any, params: any, ctx: Koa.Context) {
+        const { owner, name, query } = params;
+        return await getCollaboratorsByRepoName(owner, name, query);
       }
     }
   },

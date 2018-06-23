@@ -2,7 +2,6 @@
  * Created by axetroy on 17-7-13.
  */
 import { EventEmitter } from "events";
-const path = require("path");
 import * as Router from "koa-router";
 import * as Koa from "koa";
 import * as cors from "@koa/cors";
@@ -14,7 +13,6 @@ import GraphqlRouter from "./routers/graphql";
 import exportsRouter from "./routers/exports";
 import { initUser } from "./controllers/user";
 
-// const app: express.Application = express();
 const app = new Koa();
 
 app.use(

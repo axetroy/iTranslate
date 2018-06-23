@@ -4,21 +4,24 @@
 
 import {
   GraphQLBoolean,
+  GraphQLID,
   GraphQLInputObjectType,
   GraphQLList,
   GraphQLNonNull,
-  GraphQLString,
-  GraphQLID
+  GraphQLString
 } from "graphql";
 import * as Koa from "koa";
-import { Repository } from "../types/repository";
-import { Member } from "../types/member";
-
+import {
+  addCollaborator,
+  removeCollaborators,
+  updateCollaboratorsRole
+} from "../../controllers/collaborator";
 import {
   createRepository,
-  updateRepository,
-  AddCollaborator
+  updateRepository
 } from "../../controllers/repository";
+import { Member } from "../types/member";
+import { Repository } from "../types/repository";
 
 export default {
   Public: {},
@@ -141,14 +144,53 @@ export default {
         const username: string = params.username;
         const repoId: string = params.repoId;
         const token = ctx["token"];
-        console.log(token);
-        console.log(username);
-        console.log(repoId);
-        return AddCollaborator({
+        return addCollaborator({
           uid: token.uid,
           username,
           repoId
         });
+      }
+    },
+    updateCollaboratorRole: {
+      type: Member,
+      description: "更新项目组织成员的角色",
+      args: {
+        uid: {
+          type: new GraphQLNonNull(GraphQLID),
+          description: "用户名"
+        },
+        repoId: {
+          type: new GraphQLNonNull(GraphQLID),
+          description: "仓库ID"
+        },
+        role: {
+          type: new GraphQLNonNull(GraphQLString),
+          description: "要变更成什么样的角色"
+        }
+      },
+      async resolve(root: any, params: any, ctx: Koa.Context) {
+        const { uid, repoId, role } = params;
+        const token = ctx["token"];
+        return updateCollaboratorsRole(token.uid, uid, repoId, role);
+      }
+    },
+    removeCollaborator: {
+      type: Member,
+      description: "移除项目成员",
+      args: {
+        uid: {
+          type: new GraphQLNonNull(GraphQLID),
+          description: "用户名"
+        },
+        repoId: {
+          type: new GraphQLNonNull(GraphQLID),
+          description: "仓库ID"
+        }
+      },
+      async resolve(root: any, params: any, ctx: Koa.Context) {
+        const { uid, repoId } = params;
+        const token = ctx["token"];
+        return removeCollaborators(token.uid, uid, repoId);
       }
     }
   }
