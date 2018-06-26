@@ -1,13 +1,32 @@
 /**
  * Created by axetroy on 17-7-13.
  */
-import * as Koa from "koa";
-import { getUserInfo, searchUser } from "../../controllers/user";
-import { UserType, UserListType } from "../types/user";
 import { GraphQLNonNull, GraphQLString } from "graphql";
+import * as Koa from "koa";
+import {
+  getUserInfo,
+  getUserInfoByUsername,
+  searchUser
+} from "../../controllers/user";
+import { UserListType, UserType, PublicUser } from "../types/user";
 
 export default {
-  Public: {},
+  Public: {
+    user: {
+      type: PublicUser,
+      description: "获取用户的公开信息",
+      args: {
+        username: {
+          type: new GraphQLNonNull(GraphQLString),
+          description: "用户名"
+        }
+      },
+      async resolve(root: any, params: any, ctx: Koa.Context) {
+        const username = params.username;
+        return await getUserInfoByUsername(username);
+      }
+    }
+  },
   Me: {
     user: {
       type: UserType,

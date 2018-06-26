@@ -58,6 +58,7 @@ export default {
   },
   methods: {
     submitForm(formName) {
+      const form = this.loginForm;
       this.$refs[formName].validate(valid => {
         if (valid) {
           query(
@@ -75,8 +76,9 @@ export default {
           `,
             {
               argv: {
-                username: this.loginForm.username,
-                password: this.loginForm.pass
+                username: form.username,
+                password: form.pass,
+                email: form.email
               }
             }
           )

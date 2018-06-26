@@ -59,6 +59,27 @@ export const user = {
   }
 };
 
+export const PublicUser = new GraphQLObjectType({
+  name: "PublicUserInfoType",
+  description: "公开的用户信息, 这里不应该包含敏感字段",
+  fields: {
+    username: {
+      type: new GraphQLNonNull(GraphQLString)
+    },
+    nickname: {
+      type: new GraphQLNonNull(GraphQLString)
+    },
+    email: {
+      type: GraphQLString,
+      description: "用户邮箱由用户决定是否公开"
+    },
+    createdAt: {
+      type: new GraphQLNonNull(GraphQLString),
+      description: "用户创建时间"
+    }
+  }
+});
+
 export const UserType = new GraphQLObjectType({
   name: "UserType",
   fields: {
@@ -120,6 +141,9 @@ export const RegisterArgv = new GraphQLInputObjectType({
       type: new GraphQLNonNull(GraphQLString)
     },
     password: {
+      type: new GraphQLNonNull(GraphQLString)
+    },
+    email: {
       type: new GraphQLNonNull(GraphQLString)
     }
   }

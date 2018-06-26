@@ -30,8 +30,16 @@
                 </span>
                 <el-dropdown-menu slot="dropdown">
                   <el-dropdown-item>已登陆用户 {{$store.state.user.username}}</el-dropdown-item>
-                  <el-dropdown-item divided>个人信息</el-dropdown-item>
-                  <el-dropdown-item>用户设置</el-dropdown-item>
+                  <nuxt-link :to="'/' + $store.state.user.username">
+                    <el-dropdown-item divided>
+                      个人信息
+                    </el-dropdown-item>
+                  </nuxt-link>
+                  <nuxt-link to="/setting/profile">
+                    <el-dropdown-item divided>
+                      用户设置
+                    </el-dropdown-item>
+                  </nuxt-link>
                   <el-dropdown-item>帮助</el-dropdown-item>
                   <el-dropdown-item>管理面板</el-dropdown-item>
                   <el-dropdown-item divided command="logout">登出</el-dropdown-item>

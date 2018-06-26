@@ -14,6 +14,7 @@ import { generateToken, verifyToken, decryptToken } from "../service/jwt";
 export interface CreateArgv$ {
   username: string;
   password: string;
+  email: string;
   roles?: string[];
 }
 
@@ -32,17 +33,20 @@ export async function initUser() {
     await createUser({
       username: "admin",
       password: "admin",
+      email: "admin@admin.com",
       roles: ["user", "admin"]
     });
   } catch {}
 }
 
 export async function createUser(argv: CreateArgv$): Promise<any> {
-  const { username, password } = argv;
+  const { username, password, email } = argv;
   const t: any = await sequelize.transaction();
   try {
     const user: any = await UserModel.findOne({
-      where: { username },
+      where: {
+        [sequelize.Op.or]: [{ username }, { email }]
+      },
       transaction: t,
       lock: t.LOCK.UPDATE
     });
@@ -56,6 +60,7 @@ export async function createUser(argv: CreateArgv$): Promise<any> {
       {
         username,
         nickname: username,
+        email,
         password: md5Password,
         roles: ["user"]
       },
@@ -115,6 +120,28 @@ export async function getUserInfo(uid: string) {
 
     if (!row) {
       throw new Error(`User ${uid} not exist!`);
+    }
+
+    const data = row.dataValues;
+    await t.commit();
+    return data;
+  } catch (err) {
+    await t.rollback();
+    throw err;
+  }
+}
+
+export async function getUserInfoByUsername(username: string) {
+  const t: any = await sequelize.transaction();
+  try {
+    const row: any = await UserModel.findOne({
+      where: { username },
+      transaction: t,
+      lock: t.LOCK.UPDATE
+    });
+
+    if (!row) {
+      throw new Error(`User ${username} not exist!`);
     }
 
     const data = row.dataValues;
