@@ -4,12 +4,12 @@
 import * as _ from "lodash";
 import UserModel from "../postgres/models/user.model";
 import sequelize from "../postgres/index";
-import { md5, RFC3339NanoMaper, initQuery, sortMap } from "../utils";
+import { md5, initQuery, sortMap } from "../utils";
 import { FormQuery$ } from "../graphql/types/formQuery";
 import * as Sequelize from "sequelize";
 
 // service
-import { generateToken, verifyToken, decryptToken } from "../service/jwt";
+import { generateToken, verifyToken } from "../service/jwt";
 
 export interface CreateArgv$ {
   username: string;

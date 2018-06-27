@@ -33,6 +33,10 @@ export interface UpdateRepositoryArgv$ {
   isActive?: boolean;
 }
 
+/**
+ * 创建项目
+ * @param argv
+ */
 export async function createRepository(argv: createRepositoryArgv$) {
   const { uid, owner, name, description, readme, isPrivate, languages } = argv;
 
@@ -112,6 +116,10 @@ export async function createRepository(argv: createRepositoryArgv$) {
   }
 }
 
+/**
+ * 更新项目
+ * @param argv
+ */
 export async function updateRepository(argv: UpdateRepositoryArgv$) {
   const { id, uid, name, description, languages, isActive, readme } = argv;
 
@@ -182,7 +190,17 @@ export async function updateRepository(argv: UpdateRepositoryArgv$) {
   }
 }
 
-export async function getRepository(owner: string, name: string) {
+/**
+ * 获取共有的项目列表
+ * @param owner
+ * @param name
+ * @param filter
+ */
+export async function getRepository(
+  owner: string,
+  name: string,
+  filter: any = {}
+) {
   const t: any = await sequelize.transaction();
 
   try {
@@ -210,7 +228,8 @@ export async function getRepository(owner: string, name: string) {
     const row: any = await RepositoryModel.findOne({
       where: {
         owner: user.uid,
-        name
+        name,
+        ...filter
       },
       transaction: t
     });
@@ -230,6 +249,11 @@ export async function getRepository(owner: string, name: string) {
   }
 }
 
+/**
+ * 通过项目名，获取自身的项目信息
+ * @param uid
+ * @param name
+ */
 export async function getRepositoryByUid(uid: string, name: string) {
   const t: any = await sequelize.transaction();
 
@@ -256,6 +280,11 @@ export async function getRepositoryByUid(uid: string, name: string) {
   }
 }
 
+/**
+ * 获取项目列表
+ * @param query
+ * @param filter
+ */
 export async function getRepositories(query: FormQuery$, filter = {}) {
   let { page, limit, skip, sort, keyJson, songo } = initQuery(query);
 

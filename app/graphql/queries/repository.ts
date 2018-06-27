@@ -28,7 +28,7 @@ export default {
       },
       async resolve(root: any, params: any, req: any) {
         const { owner, name } = params;
-        return await getRepository(owner, name);
+        return await getRepository(owner, name, { isPrivate: false });
       }
     },
     repositories: {

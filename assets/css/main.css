@@ -54,3 +54,7 @@ ul {
 img {
   max-width: 100%;
 }
+
+.pagination {
+  text-align: center;
+}

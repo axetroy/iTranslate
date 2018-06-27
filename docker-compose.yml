@@ -14,10 +14,6 @@ services:
   pg:
     image: postgres:10.4-alpine
     restart: always
-    # environment:
-    #   - POSTGRES_PORT=5432
-    #   - POSTGRES_USER=postgres
-    #   - POSTGRES_PASSWORD=postgres
     volumes:
       - ./docker/volumes/postgresql:/var/lib/postgresql
     ports:
