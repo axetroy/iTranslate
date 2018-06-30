@@ -1,6 +1,6 @@
 <template>
   <div id="content">
-    <el-row :gutter="0">
+    <el-row v-if="isUser" :gutter="0">
       <el-col :span="6" class="user-info">
         <div><img class="avatar" src="https://secure.gravatar.com/avatar/c1234b1cdbb60fc6d988bb97f41c562d?s=290" alt=""></div>
         <div class="meta-block">
@@ -63,6 +63,36 @@
             :total="meta.count">
           </el-pagination>
         </div>
+      </el-col>
+    </el-row>
+    <el-row class="org" v-if="isOrganization" :gutter="0">
+      <div class="org-header">
+        <div class="logo">
+          <img class="avatar" src="https://secure.gravatar.com/avatar/c1234b1cdbb60fc6d988bb97f41c562d?s=290" alt="">
+        </div>
+        <div class="org-meta">
+          <div>{{organization.name}}</div>
+          <div>这是组织描述</div>
+          <div class="org-detail">
+            <span>上海</span>
+            <span>http://example.com</span>
+            <span>email@example.com</span>
+          </div>
+        </div>
+      </div>
+      <div>
+        <el-menu mode="horizontal" :default-active="$route.path" :unique-opened="true">
+          <el-menu-item v-for="menu in orgMenus" :key="menu.name" :index="'/admin/dragonB' + menu.path" @click="$router.replace('/' + repo.owner.username + '/' + repo.name + menu.path)">
+            {{menu.title}}
+          </el-menu-item>
+        </el-menu>
+      </div>
+      <el-col :span="18">
+        组织列表
+      </el-col>
+      <el-col :span="6">
+        组织详情
+        {{organization}}
       </el-col>
     </el-row>
   </div>
@@ -142,6 +172,37 @@ $borderColor: #e1e4e8;
     }
   }
 }
+
+.org {
+  .org-meta,
+  .logo {
+    display: inline-block;
+  }
+  .org-header {
+    font-size: 0;
+  }
+  .logo {
+    font-size: 1.6rem;
+    img {
+      width: 10rem;
+      height: 10rem;
+    }
+  }
+  .org-meta {
+    font-size: 1.6rem;
+    vertical-align: top;
+    margin-left: 2rem;
+    > div {
+      &:first-child {
+        margin-top: 0;
+      }
+      margin: 1rem 0;
+    }
+    .org-detail {
+      color: #666;
+    }
+  }
+}
 </style>
 
 <script>
@@ -195,8 +256,23 @@ export default {
     const { user } = params;
     const { page, limit } = query;
 
-    const userResponse = await $graphql(
+    // 先判断user是用户，还是组织
+    const isUserResponse = await $graphql(
       `
+      query getUserInfo($username: String!){
+        public{
+          isUser(username: $username)
+        }
+      }
+    `,
+      { username: user }
+    );
+
+    const isUser = !!get(isUserResponse, ["data", "public", "isUser"]);
+
+    if (isUser) {
+      const userResponse = await $graphql(
+        `
       query getUserInfo($username: String!){
         public{
           user(username: $username){
@@ -208,22 +284,50 @@ export default {
         }
       }
     `,
-      {
-        username: user
+        {
+          username: user
+        }
+      );
+
+      // 获取项目列表
+      const { data: publicRepositories, meta } = await getRepositories({
+        page: isNaN(+page) ? 0 : +page,
+        limit: isNaN(+limit) ? 10 : +limit
+      })($graphql);
+
+      const userInfo = get(userResponse, ["data", "public", "user"]);
+
+      return { userInfo, publicRepositories, meta, isUser };
+    } else {
+      // 如果是组织的话
+
+      // 获取组织详情
+      const orgResponse = await $graphql(
+        `
+      query getPublicOrg($name: String!){
+        public{
+          organization(name: $name){
+            name
+            createdAt
+            updatedAt
+          }
+        }
       }
-    );
+      `,
+        {
+          name: user
+        }
+      );
 
-    const { data: publicRepositories, meta } = await getRepositories({
-      page: isNaN(+page) ? 0 : +page,
-      limit: isNaN(+limit) ? 10 : +limit
-    })($graphql);
+      const organization = get(orgResponse, ["data", "public", "organization"]);
 
-    const userInfo = get(userResponse, ["data", "public", "user"]);
-
-    return { userInfo, publicRepositories, meta };
+      return { isOrganization: true, organization };
+    }
   },
   data() {
     return {
+      isUser: false,
+      isOrganization: false,
       userInfo: {},
       publicRepositories: [],
       meta: {
@@ -233,7 +337,19 @@ export default {
       form: {
         name: "",
         type: ""
-      }
+      },
+      orgMenus: [
+        {
+          name: "index",
+          path: "",
+          title: "项目"
+        },
+        {
+          name: "people",
+          path: "/people",
+          title: "成员"
+        }
+      ]
     };
   },
   methods: {

@@ -3,6 +3,7 @@
  */
 import * as _ from "lodash";
 import UserModel from "../postgres/models/user.model";
+import OrganizationModel from "../postgres/models/organization.model";
 import sequelize from "../postgres/index";
 import { md5, initQuery, sortMap } from "../utils";
 import { FormQuery$ } from "../graphql/types/formQuery";
@@ -134,7 +135,7 @@ export async function getUserInfo(uid: string) {
 export async function getUserInfoByUsername(username: string) {
   const t: any = await sequelize.transaction();
   try {
-    const row: any = await UserModel.findOne({
+    let row: any = await UserModel.findOne({
       where: { username },
       transaction: t,
       lock: t.LOCK.UPDATE
@@ -145,6 +146,7 @@ export async function getUserInfoByUsername(username: string) {
     }
 
     const data = row.dataValues;
+
     await t.commit();
     return data;
   } catch (err) {

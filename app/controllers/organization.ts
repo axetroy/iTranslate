@@ -143,6 +143,31 @@ export async function getOrganization(uid: string, name: string) {
   }
 }
 
+export async function getPublicOrganization(name: string) {
+  const t: any = await sequelize.transaction();
+
+  try {
+    const row: any = await OrganizationModel.findOne({
+      where: { name },
+      transaction: t,
+      lock: t.LOCK.UPDATE
+    });
+
+    if (!row) {
+      throw new Error(`组织不存在`);
+    }
+
+    const data = row.dataValues;
+
+    await t.commit();
+
+    return data;
+  } catch (err) {
+    await t.rollback();
+    throw err;
+  }
+}
+
 export async function getOrganizations(
   uid: string,
   query: FormQuery$,

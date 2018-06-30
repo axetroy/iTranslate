@@ -11,7 +11,6 @@
                 <el-button style="float: right; padding: 3px 0" type="text">+</el-button>
               </nuxt-link>
             </div>
-            {{$store.state.user}}
             <div v-for="repo of repositories" :key="repo.id" class="repo">
               <nuxt-link :to="'/' + $store.state.user.username + '/' + repo.name">{{repo.name}}</nuxt-link>
             </div>

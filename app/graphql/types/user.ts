@@ -7,7 +7,8 @@ import {
   GraphQLString,
   GraphQLList,
   GraphQLInputObjectType,
-  GraphQLID
+  GraphQLID,
+  GraphQLBoolean
 } from "graphql";
 
 import { generateListType } from "./generate-list";
@@ -94,6 +95,10 @@ export const UserType = new GraphQLObjectType({
     },
     roles: {
       type: new GraphQLNonNull(new GraphQLList(GraphQLString))
+    },
+    isOrganization:{
+      type: GraphQLBoolean,
+      description: "是否是组织"
     },
     createdAt: {
       type: new GraphQLNonNull(GraphQLString)
