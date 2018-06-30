@@ -25,7 +25,7 @@
               </nuxt-link>
             </div>
             <div v-for="org of orgs" :key="org.id" class="repo">
-              {{org.name}}
+              <nuxt-link :to="'/' + org.name">{{org.name}}</nuxt-link>
             </div>
           </el-card>
         </el-tab-pane>
