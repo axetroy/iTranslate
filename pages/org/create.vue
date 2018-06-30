@@ -36,6 +36,8 @@ export default {
   },
   methods: {
     submit() {
+      // TODO: 表单检验
+      const form = this.form;
       this.$graphql(
         `
         mutation createOrg($argv: CreateOrganizationArgv){
@@ -52,13 +54,14 @@ export default {
       `,
         {
           argv: {
-            name: this.form.name,
-            description: this.form.desc
+            name: form.name,
+            description: form.desc
           }
         }
       )
         .then(() => {
           this.$success(`创建成功.`);
+          this.$router.replace({ path: "/" + form.name });
         })
         .catch(err => {
           this.$error(err.message);
