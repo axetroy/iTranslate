@@ -83,6 +83,8 @@ export default {
   },
   methods: {
     submit() {
+      // TODO: 表单验证
+      const form = this.form;
       this.$graphql(
         `
         mutation createRepo($argv: CreateRepositoryArgv){
@@ -100,16 +102,19 @@ export default {
       `,
         {
           argv: {
-            name: this.form.name,
-            description: this.form.desc,
-            languages: this.form.languages,
-            readme: this.form.readme,
-            isPrivate: !this.form.visible
+            name: form.name,
+            description: form.desc,
+            languages: form.languages,
+            readme: form.readme,
+            isPrivate: !form.visible
           }
         }
       )
         .then(() => {
           this.$success(`创建成功.`);
+          this.$router.replace({
+            path: `/${this.$store.state.user.username}/${form.name}`
+          });
         })
         .catch(err => {
           this.$error(err.message);
