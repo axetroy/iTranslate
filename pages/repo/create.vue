@@ -6,12 +6,14 @@
           <h3>创建新的仓库</h3>
         </el-form-item>
         <el-form-item label="拥有者" required>
+          {{form.owner}}
           <el-select v-model="form.owner" placeholder="请选择">
+            <el-option :value="me.uid" :label="me.username"/>
             <el-option
-              v-for="item in owners"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value">
+              v-for="v in organizations"
+              :key="v.id"
+              :label="v.name"
+              :value="v.id">
             </el-option>
           </el-select>
         </el-form-item>
@@ -53,6 +55,7 @@ import { get } from "lodash";
 export default {
   middleware: ["require-login"],
   async asyncData({ $graphql }) {
+    //获取服务器当前支持的语言
     const res = await $graphql(`
       query getLanguage{
         public{
@@ -61,15 +64,46 @@ export default {
       }
     `);
     const languages = get(res, ["data", "public", "languages"]) || [];
+
+    const orgsResponse = await $graphql(
+      `
+      query getOrgs($query: FormQuery!){
+        me{
+          organizations(query: $query){
+            data{
+              id
+              name
+              createdAt
+              updatedAt
+            }
+          }
+        }
+      }
+    `,
+      {
+        query: { limit: 100 }
+      }
+    );
+
+    const organizations = get(orgsResponse, [
+      "data",
+      "me",
+      "organizations",
+      "data"
+    ]);
+
     return {
-      spportLanguages: languages
+      spportLanguages: languages,
+      organizations
     };
   },
   data() {
+    const me = this.me;
+    console.log(me);
     return {
       spportLanguages: [],
       form: {
-        owner: this.$store.state.user.username,
+        owner: this.$store.state.user.uid,
         visible: true,
         languages: ["en-us", "zh-cn"]
       },
@@ -78,8 +112,16 @@ export default {
           label: "Axetroy",
           value: "Axetroy"
         }
-      ]
+      ],
+      organizations: []
     };
+  },
+  computed: {
+    me: {
+      get() {
+        return this.$store.state.user;
+      }
+    }
   },
   methods: {
     submit() {
@@ -103,6 +145,9 @@ export default {
         {
           argv: {
             name: form.name,
+            // 如果是为自己创建项目，则不用指定owner
+            // 如果是为组织创建项目，则需要指定owner
+            owner: form.owner === this.me.uid ? undefined : form.owner,
             description: form.desc,
             languages: form.languages,
             readme: form.readme,

@@ -11,6 +11,7 @@ import {
 
 import { generateListType } from "./generate-list";
 import { getUserInfoFromField } from "./user";
+import { getOrgInfoFromField } from "./organization";
 
 export const Repository = new GraphQLObjectType({
   name: "Repository",
@@ -19,7 +20,8 @@ export const Repository = new GraphQLObjectType({
       type: new GraphQLNonNull(GraphQLString)
     },
     creator: getUserInfoFromField("creator"),
-    owner: getUserInfoFromField("owner"),
+    owner: getUserInfoFromField("owner", false),
+    org: getOrgInfoFromField("owner", false),
     name: {
       type: new GraphQLNonNull(GraphQLString)
     },

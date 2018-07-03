@@ -6,7 +6,8 @@ import { GraphQLBoolean, GraphQLNonNull, GraphQLString } from "graphql";
 import {
   getOrganization,
   getPublicOrganization,
-  getOrganizations
+  getOrganizations,
+  getOperableOrganizations
 } from "../../controllers/organization";
 import {
   Organization,
@@ -69,6 +70,14 @@ export default {
       async resolve(root: any, params: any, ctx: Koa.Context) {
         const token = ctx["token"];
         return await getOrganizations(token.uid, params.query);
+      }
+    },
+    operableOrganizations: {
+      type: Organizations,
+      description: "获取该用户有权限操作的组织列表",
+      async resolve(root: any, params: any, ctx: Koa.Context) {
+        const token = ctx["token"];
+        return await getOperableOrganizations(token.uid);
       }
     }
   }

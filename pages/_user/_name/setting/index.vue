@@ -64,14 +64,16 @@ import { get } from "lodash";
 export default {
   props: ["repo"],
   async asyncData({ $graphql }) {
-    const res = await $graphql(`
+    // 获取语言列表
+    const languagesResponse = await $graphql(`
       query getLanguage{
         public{
           languages
         }
       }
     `);
-    const languages = get(res, ["data", "public", "languages"]) || [];
+
+    const languages = get(languagesResponse, ["data", "public", "languages"]);
     return {
       spportLanguages: languages.map(v => {
         return {

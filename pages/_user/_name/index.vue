@@ -129,7 +129,7 @@ async function getRows($graphql, repoId) {
 }
 
 export default {
-  props: ["repo"],
+  props: ["repo", "owner"],
   async asyncData({ $graphql, params, redirect }) {
     // TODO
     // 应该在这里渲染数据

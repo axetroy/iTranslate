@@ -168,6 +168,35 @@ export async function getPublicOrganization(name: string) {
   }
 }
 
+/**
+ * 获取组织公开的信息
+ * @param id 
+ */
+export async function getPublicOrganizationById(id: string) {
+  const t: any = await sequelize.transaction();
+
+  try {
+    const row: any = await OrganizationModel.findOne({
+      where: { id, isActive: true },
+      transaction: t,
+      lock: t.LOCK.UPDATE
+    });
+
+    if (!row) {
+      throw new Error(`组织不存在`);
+    }
+
+    const data = row.dataValues;
+
+    await t.commit();
+
+    return data;
+  } catch (err) {
+    await t.rollback();
+    throw err;
+  }
+}
+
 export async function getOrganizations(
   uid: string,
   query: FormQuery$,
@@ -201,6 +230,39 @@ export async function getOrganizations(
       num: data.length,
       sort,
       keyJson
+    };
+    return result;
+  } catch (err) {
+    throw err;
+  }
+}
+
+/**
+ * 获取用户有权限操作的组织列表
+ * @param uid
+ */
+export async function getOperableOrganizations(uid: string) {
+  try {
+    const result: any = {};
+    const queryResult: any = await OrganizationModel.findAndCountAll({
+      where: {
+        owner: uid,
+        isActive: true
+      }
+    });
+    const rows = queryResult.rows || [];
+    const count = queryResult.count || 0;
+    const data = rows.map((row: any) => row.dataValues);
+
+    result.data = data;
+    result.meta = {
+      page: 0,
+      limit: 0,
+      skip: 0,
+      count,
+      num: data.length,
+      sort: [],
+      keyJson: "{}"
     };
     return result;
   } catch (err) {

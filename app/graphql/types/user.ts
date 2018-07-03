@@ -29,12 +29,20 @@ const userInfoType = new GraphQLObjectType({
   }
 });
 
-export function getUserInfoFromField(field = "uid") {
+export function getUserInfoFromField(field = "uid", nonnull = true) {
   return {
     type: userInfoType,
     async resolve(parent: any, params: any, req: any) {
       const uid: string = parent[field];
-      return await getUserInfo(uid);
+      try{
+        return await getUserInfo(uid);
+      }catch(err){
+        if (nonnull){
+          throw err;
+        }else{
+          return null
+        }
+      }
     }
   };
 }
@@ -96,7 +104,7 @@ export const UserType = new GraphQLObjectType({
     roles: {
       type: new GraphQLNonNull(new GraphQLList(GraphQLString))
     },
-    isOrganization:{
+    isOrganization: {
       type: GraphQLBoolean,
       description: "是否是组织"
     },

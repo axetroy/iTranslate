@@ -1,15 +1,25 @@
-import {
-  GraphQLObjectType,
-  GraphQLNonNull,
-  GraphQLString,
-  GraphQLID,
-  GraphQLBoolean,
-  GraphQLList,
-  GraphQLInt,
-  GraphQLInputObjectType
-} from "graphql";
+import { GraphQLObjectType, GraphQLNonNull, GraphQLString } from "graphql";
+import { getPublicOrganizationById } from "../../controllers/organization";
 
 import { generateListType } from "./generate-list";
+
+export function getOrgInfoFromField(field = "uid", nonnull = true) {
+  return {
+    type: Organization,
+    async resolve(parent: any, params: any, req: any) {
+      const id: string = parent[field];
+      try {
+        return await getPublicOrganizationById(id);
+      } catch (err) {
+        if (nonnull) {
+          throw err;
+        } else {
+          return null;
+        }
+      }
+    }
+  };
+}
 
 export const Organization = new GraphQLObjectType({
   name: "Organization",

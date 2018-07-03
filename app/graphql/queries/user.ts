@@ -14,7 +14,7 @@ export default {
   Public: {
     isUser: {
       type: new GraphQLNonNull(GraphQLBoolean),
-      description: "判定一个用户名是不是用户",
+      description: "判定一个用户名是不是用，如果不是用户，则是组织",
       args: {
         username: {
           type: new GraphQLNonNull(GraphQLString),
@@ -23,7 +23,6 @@ export default {
       },
       async resolve(root: any, params: any, ctx: Koa.Context) {
         const username = params.username;
-        console.log(`查询用户名`, username);
         try {
           await getUserInfoByUsername(username);
           return true;

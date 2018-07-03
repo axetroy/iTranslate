@@ -76,7 +76,7 @@ export async function createRepository(argv: createRepositoryArgv$) {
     });
 
     if (repository) {
-      throw new Error(`repository have exist!`);
+      throw new Error(`仓库已存在`);
     }
 
     // 创建仓库
@@ -205,9 +205,7 @@ export async function getRepository(
 
   try {
     let user: any = await UserModel.findOne({
-      where: {
-        username: owner
-      },
+      where: { username: owner },
       transaction: t
     });
 
@@ -227,15 +225,16 @@ export async function getRepository(
 
     const row: any = await RepositoryModel.findOne({
       where: {
-        owner: user.uid,
+        owner: user.uid || user.id,
         name,
+        isActive: true,
         ...filter
       },
       transaction: t
     });
 
     if (!row) {
-      throw new Error(`repository not exist!`);
+      throw new Error(`仓库不存在`);
     }
 
     const data = row.dataValues;
