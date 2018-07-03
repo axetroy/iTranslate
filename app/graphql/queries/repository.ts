@@ -6,6 +6,7 @@ import * as Koa from "koa";
 import { getCollaboratorsByRepoName } from "../../controllers/collaborator";
 import {
   getRepositories,
+  getPublicRepositories,
   getRepository,
   getRepositoryByUid
 } from "../../controllers/repository";
@@ -38,10 +39,14 @@ export default {
         query: {
           name: "query",
           type: new GraphQLNonNull(FormQuery)
+        },
+        owner: {
+          name: "指定某个拥有者下的仓库列表",
+          type: GraphQLString
         }
       },
       async resolve(root: any, params: any, req: any) {
-        return await getRepositories(params.query);
+        return await getPublicRepositories(params.query, params.owner);
       }
     },
     collaborators: {

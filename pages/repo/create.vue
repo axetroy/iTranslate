@@ -6,7 +6,6 @@
           <h3>创建新的仓库</h3>
         </el-form-item>
         <el-form-item label="拥有者" required>
-          {{form.owner}}
           <el-select v-model="form.owner" placeholder="请选择">
             <el-option :value="me.uid" :label="me.username"/>
             <el-option
@@ -157,8 +156,12 @@ export default {
       )
         .then(() => {
           this.$success(`创建成功.`);
+          const ownerName =
+            form.owner === this.me.uid
+              ? this.me.username
+              : this.organizations.find(v => v.id === form.owner).name;
           this.$router.replace({
-            path: `/${this.$store.state.user.username}/${form.name}`
+            path: `/${ownerName}/${form.name}`
           });
         })
         .catch(err => {

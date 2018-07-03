@@ -318,3 +318,74 @@ export async function getRepositories(query: FormQuery$, filter = {}) {
     throw err;
   }
 }
+
+/**
+ * 获取公共的仓库列表
+ * @param query
+ * @param filter
+ */
+export async function getPublicRepositories(query: FormQuery$, owner: string) {
+  let { page, limit, skip, sort, keyJson, songo } = initQuery(query);
+
+  const t = await sequelize.transaction();
+
+  try {
+    let isOrg = false;
+
+    let user: any = await UserModel.findOne({
+      where: {
+        username: owner
+      },
+      transaction: t
+    });
+
+    // 如果用户表找不到，则去找组织表
+    if (!user) {
+      user = await OrganizationModel.findOne({
+        where: {
+          name: owner
+        },
+        transaction: t
+      });
+      isOrg = !!user;
+    }
+
+    if (!user) {
+      throw new Error(`用户不存在`);
+    }
+
+    const result: any = {};
+    const queryResult: any = await RepositoryModel.findAndCountAll({
+      limit,
+      offset: limit * page,
+      order: sortMap(sort),
+      where: {
+        ...songo,
+        isActive: true,
+        owner: isOrg ? user.id : user.uid
+      },
+      transaction: t
+    });
+    const rows = queryResult.rows || [];
+    const count = queryResult.count || 0;
+    const data = rows.map((row: any) => row.dataValues);
+
+    result.data = data;
+    result.meta = {
+      page,
+      limit,
+      skip,
+      count,
+      num: data.length,
+      sort,
+      keyJson
+    };
+
+    await t.commit();
+
+    return result;
+  } catch (err) {
+    await t.rollback();
+    throw err;
+  }
+}

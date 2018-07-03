@@ -5,8 +5,8 @@
         <div><img class="avatar" src="https://secure.gravatar.com/avatar/c1234b1cdbb60fc6d988bb97f41c562d?s=290" alt=""></div>
         <div class="meta-block">
           <div class="name-block">
-            <span class="username">{{userInfo.username}}</span>
-            <span class="nickname">{{userInfo.nickname}}</span>
+            <span class="username">{{owner.username}}</span>
+            <span class="nickname">{{owner.nickname}}</span>
           </div>
 
           <div class="desc">
@@ -17,9 +17,9 @@
         </div>
         <div class="meta-block">
           <ul>
-            <li class="v-detail">{{userInfo.email}}</li>
+            <li class="v-detail">{{owner.email}}</li>
             <li class="v-detail">http://axetroy.xyz</li>
-            <li class="v-detail">加入于 {{userInfo.createdAt | date}}</li>
+            <li class="v-detail">加入于 {{owner.createdAt | date}}</li>
             <li class="v-detail">0 关注着 - 0 关注中</li>
           </ul>
         </div>
@@ -43,7 +43,7 @@
         </el-form>
         <div v-for="v in publicRepositories" :key="v.id" class="repository">
           <div class="repository-item repository-info">
-            <nuxt-link :to="'/' + v.owner.username + '/' + v.name">{{v.name}}</nuxt-link>
+            <nuxt-link :to="'/' + owner.username + '/' + v.name">{{v.name}}</nuxt-link>
           </div>
           <div class="repository-item repository-desc">
             <p>{{v.description}}</p>
@@ -65,13 +65,13 @@
         </div>
       </el-col>
     </el-row>
-    <el-row class="org" v-if="isOrganization" :gutter="0">
+    <el-row class="org" v-else :gutter="0">
       <div class="org-header">
         <div class="logo">
           <img class="avatar" src="https://secure.gravatar.com/avatar/c1234b1cdbb60fc6d988bb97f41c562d?s=290" alt="">
         </div>
         <div class="org-meta">
-          <div>{{organization.name}}</div>
+          <div>{{owner.name}}</div>
           <div>这是组织描述</div>
           <div class="org-detail">
             <span>上海</span>
@@ -82,17 +82,38 @@
       </div>
       <div>
         <el-menu mode="horizontal" :default-active="$route.path" :unique-opened="true">
-          <el-menu-item v-for="menu in orgMenus" :key="menu.name" :index="'/admin/dragonB' + menu.path" @click="$router.replace('/' + repo.owner.username + '/' + repo.name + menu.path)">
-            {{menu.title}}
+          <el-menu-item v-for="menu in orgMenus" :key="menu.name" :index="'/admin/dragonB' + menu.path">
+            <nuxt-link :to="menu.prefix + '/' + owner.name + menu.path">{{menu.name}}</nuxt-link>
           </el-menu-item>
         </el-menu>
       </div>
-      <el-col :span="18">
-        组织列表
+      <el-col :span="18" class="content">
+        <div v-for="v in publicRepositories" :key="v.id" class="repository">
+          <div class="repository-item repository-info">
+            <nuxt-link :to="'/' + owner.name + '/' + v.name">{{v.name}}</nuxt-link>
+          </div>
+          <div class="repository-item repository-desc">
+            <p>{{v.description}}</p>
+          </div>
+          <div class="repository-item repository-meta">
+            创建于 {{v.createdAt | timeago}} 更新于 {{v.updatedAt | timeago}}
+          </div>
+        </div>
+        <div class="pagination">
+          <el-pagination
+            @current-change="changePage"
+            background
+            layout="prev, pager, next"
+            :current-page="meta.page + 1"
+            :pager-count="11"
+            :page-size="meta.limit"
+            :total="meta.count">
+          </el-pagination>
+        </div>
       </el-col>
       <el-col :span="6">
         组织详情
-        {{organization}}
+        {{owner}}
       </el-col>
     </el-row>
   </div>
@@ -207,20 +228,18 @@ $borderColor: #e1e4e8;
 
 <script>
 import { get } from "lodash";
+import { SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION } from "constants";
 
 function getRepositories(meta) {
-  return async function(graphql) {
+  return async function(graphql, owner) {
     const repositoriesResponse = await graphql(
       `
-        query get($query: FormQuery!) {
+        query get($query: FormQuery!, $owner: String) {
           public {
-            repositories(query: $query) {
+            repositories(query: $query, owner: $owner) {
               data {
                 id
                 name
-                owner {
-                  username
-                }
                 description
                 createdAt
                 updatedAt
@@ -239,7 +258,8 @@ function getRepositories(meta) {
         query: {
           limit: meta.limit,
           page: meta.page
-        }
+        },
+        owner
       }
     );
     const { data, meta: _meta } = get(repositoriesResponse, [
@@ -253,7 +273,7 @@ function getRepositories(meta) {
 
 export default {
   async asyncData({ $graphql, query, params }) {
-    const { user } = params;
+    const { user: ownerName } = params;
     const { page, limit } = query;
 
     // 先判断user是用户，还是组织
@@ -265,70 +285,73 @@ export default {
         }
       }
     `,
-      { username: user }
+      { username: ownerName }
     );
 
     const isUser = !!get(isUserResponse, ["data", "public", "isUser"]);
+    let publicRepositories = [];
+    let owner = null;
+    let meta = null;
 
     if (isUser) {
+      // 获取用户信息
       const userResponse = await $graphql(
         `
-      query getUserInfo($username: String!){
-        public{
-          user(username: $username){
-            username
-            nickname
-            email
-            createdAt
+        query getUserInfo($username: String!){
+          public{
+            user(username: $username){
+              username
+              nickname
+              email
+              createdAt
+            }
           }
         }
-      }
     `,
-        {
-          username: user
-        }
+        { username: ownerName }
       );
 
-      // 获取项目列表
-      const { data: publicRepositories, meta } = await getRepositories({
-        page: isNaN(+page) ? 0 : +page,
-        limit: isNaN(+limit) ? 10 : +limit
-      })($graphql);
-
-      const userInfo = get(userResponse, ["data", "public", "user"]);
-
-      return { userInfo, publicRepositories, meta, isUser };
+      owner = get(userResponse, ["data", "public", "user"]);
     } else {
-      // 如果是组织的话
-
       // 获取组织详情
       const orgResponse = await $graphql(
         `
-      query getPublicOrg($name: String!){
-        public{
-          organization(name: $name){
-            name
-            createdAt
-            updatedAt
+        query getPublicOrg($name: String!){
+          public{
+            organization(name: $name){
+              name
+              createdAt
+              updatedAt
+            }
           }
         }
-      }
       `,
-        {
-          name: user
-        }
+        { name: ownerName }
       );
 
-      const organization = get(orgResponse, ["data", "public", "organization"]);
-
-      return { isOrganization: true, organization };
+      owner = get(orgResponse, ["data", "public", "organization"]);
     }
+
+    // 获取项目列表
+    const { data, meta: _meta } = await getRepositories({
+      page: isNaN(+page) ? 0 : +page,
+      limit: isNaN(+limit) ? 10 : +limit
+    })($graphql, ownerName);
+
+    publicRepositories = data;
+    meta = _meta;
+
+    return {
+      owner,
+      publicRepositories,
+      meta,
+      isUser
+    };
   },
   data() {
     return {
       isUser: false,
-      isOrganization: false,
-      userInfo: {},
+      owner: null,
       publicRepositories: [],
       meta: {
         limit: 10,
@@ -340,12 +363,14 @@ export default {
       },
       orgMenus: [
         {
-          name: "index",
+          name: "Repositories",
+          prefix: "",
           path: "",
           title: "项目"
         },
         {
-          name: "people",
+          name: "People",
+          prefix: "/org",
           path: "/people",
           title: "成员"
         }
@@ -361,7 +386,7 @@ export default {
         const { data: publicRepositories, meta } = await getRepositories({
           page: page - 1,
           limit: this.meta.limit
-        })(this.$graphql);
+        })(this.$graphql, this.$route.params.user);
         this.publicRepositories = publicRepositories;
         this.meta = meta;
         this.$router.push({
