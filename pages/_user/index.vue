@@ -83,7 +83,7 @@
       <div>
         <el-menu mode="horizontal" :default-active="$route.path" :unique-opened="true">
           <el-menu-item v-for="menu in orgMenus" :key="menu.name" :index="'/admin/dragonB' + menu.path">
-            <nuxt-link :to="menu.prefix + '/' + owner.name + menu.path">{{menu.name}}</nuxt-link>
+            <nuxt-link :to="menu.prefix + '/' + owner.name + menu.path">{{menu.title}}</nuxt-link>
           </el-menu-item>
         </el-menu>
       </div>
@@ -112,8 +112,44 @@
         </div>
       </el-col>
       <el-col :span="6">
-        组织详情
-        {{owner}}
+        <div class="org-box">
+          <div class="org-pannel">
+            <div class="org-pannel-header"><h4>组织成员</h4></div>
+            <div class="org-pannel-body">
+              <div v-for="v in members" :key="v.id">
+                <img class="member-logo" src="https://secure.gravatar.com/avatar/c1234b1cdbb60fc6d988bb97f41c562d?s=290"/>
+                <div class="member-meta">
+                  <div class="member-name"><nuxt-link :to="'/' + v.user.username">{{v.user.username}}</nuxt-link></div>
+                  <div class="member-nickname">{{v.user.nickname}}</div>
+                </div>
+              </div>
+            </div>
+            <div class="org-pannel-footer">
+            <el-dialog class="invite-dialog" title="邀请成员加入组织" :visible.sync="inviteDialogVisible" center>
+              <el-form>
+                <el-form-item>
+                  <el-autocomplete
+                    v-model="inviteDialogForm.username"
+                    style="width: 100%"
+                    value-key="value"
+                    value="user"
+                    :fetch-suggestions="querySearchAsync"
+                    :trigger-on-focus="false"
+                    @select="onSelectInvateUser"
+                    placeholder="请输入用户名搜索用户"
+                  >
+                    <!-- <template slot="prepend">user</template> -->
+                    <template slot="append">
+                      <div style="cursor: pointer;" @click="invitePeople(inviteDialogForm.username)">邀请</div>
+                    </template>
+                  </el-autocomplete>
+                </el-form-item>
+              </el-form>
+            </el-dialog>
+              <el-button size="small" @click="invite">邀请成员</el-button>
+            </div>
+          </div>
+        </div>
       </el-col>
     </el-row>
   </div>
@@ -223,12 +259,58 @@ $borderColor: #e1e4e8;
       color: #666;
     }
   }
+  .org-box {
+    margin-top: 3rem;
+  }
+  .org-pannel {
+    padding: 1.6rem;
+    border: 1px solid #e1e4e8;
+    h4 {
+      color: #24292e;
+      margin-bottom: 0.8rem;
+      font-weight: 400;
+    }
+    .member-logo {
+      float: left;
+      width: 4rem;
+      height: 4rem;
+    }
+    .member-meta {
+      vertical-align: top;
+      margin-left: 5rem;
+      &::after {
+        content: "";
+        display: block;
+        width: 0;
+        height: 0;
+        clear: both;
+      }
+      .member-nickname {
+        font-size: 1.2rem;
+        color: #586069;
+      }
+    }
+    .org-pannel-footer {
+      padding: 1rem;
+      background-color: #f6f8fa;
+      z-index: 999;
+      margin: 1.6rem -1.6rem -1.6rem -1.6rem;
+    }
+  }
 }
 </style>
 
+<style lang="less">
+.invite-dialog {
+  .el-dialog {
+    width: 42rem !important;
+  }
+}
+</style>
+
+
 <script>
 import { get } from "lodash";
-import { SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION } from "constants";
 
 function getRepositories(meta) {
   return async function(graphql, owner) {
@@ -292,6 +374,8 @@ export default {
     let publicRepositories = [];
     let owner = null;
     let meta = null;
+    let members = []; // 组织成员，当前是组织页面的时候才生效
+    let memberMeta = null;
 
     if (isUser) {
       // 获取用户信息
@@ -330,6 +414,47 @@ export default {
       );
 
       owner = get(orgResponse, ["data", "public", "organization"]);
+
+      const membersResponse = await $graphql(
+        `
+        query publicOrgMembers($name: String!){
+          public{
+            organizationMembers(name: $name){
+              data{
+                id
+                user{
+                  username
+                  nickname
+                }
+                createdAt
+                updatedAt
+              }
+              meta{
+                limit
+                page
+                count
+                num
+              }
+            }
+          }
+        }
+      `,
+        { name: ownerName }
+      );
+
+      members = get(membersResponse, [
+        "data",
+        "public",
+        "organizationMembers",
+        "data"
+      ]);
+
+      memberMeta = get(membersResponse, [
+        "data",
+        "public",
+        "organizationMembers",
+        "meta"
+      ]);
     }
 
     // 获取项目列表
@@ -345,12 +470,15 @@ export default {
       owner,
       publicRepositories,
       meta,
-      isUser
+      isUser,
+      members,
+      memberMeta
     };
   },
   data() {
     return {
       isUser: false,
+      inviteDialogVisible: false,
       owner: null,
       publicRepositories: [],
       meta: {
@@ -360,6 +488,10 @@ export default {
       form: {
         name: "",
         type: ""
+      },
+      inviteDialogForm: {
+        username: "",
+        user: null
       },
       orgMenus: [
         {
@@ -373,8 +505,19 @@ export default {
           prefix: "/org",
           path: "/people",
           title: "成员"
+        },
+        {
+          name: "Setting",
+          prefix: "/org",
+          path: "/setting",
+          title: "设置"
         }
-      ]
+      ],
+      members: [],
+      memberMeta: {
+        limit: 10,
+        page: 0
+      }
     };
   },
   methods: {
@@ -395,6 +538,57 @@ export default {
       } catch (err) {
         this.$error(err.message);
       }
+    },
+    // 邀请人加入组织
+    async invite() {
+      this.inviteDialogVisible = !this.inviteDialogVisible;
+    },
+    // 搜索
+    querySearchAsync(queryString, cb) {
+      if (!queryString) {
+        return;
+      }
+      this.$graphql(
+        `
+        query search ($keyword: String!){
+          me{
+            searchUser(username: $keyword){
+              data{
+                username
+                uid
+              }
+              meta{
+                num
+                count
+                limit
+                count
+              }
+            }
+          }
+        }
+      `,
+        {
+          keyword: queryString
+        }
+      ).then(res => {
+        const userList = get(res, ["data", "me", "searchUser", "data"]) || [];
+        cb(
+          userList.map(v => {
+            return {
+              value: v.username,
+              user: v
+            };
+          })
+        );
+      });
+    },
+    onSelectInvateUser({ user }) {
+      this.inviteDialogForm.user = user;
+    },
+    // 选中邀请的人
+    invitePeople() {
+      // TODO: 表单校验
+      console.log(`邀请 ${this.inviteDialogForm.username}...`);
     }
   }
 };

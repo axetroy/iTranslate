@@ -7,13 +7,15 @@ import {
   getOrganization,
   getPublicOrganization,
   getOrganizations,
-  getOperableOrganizations
+  getOperableOrganizations,
+  getPublicOrganizationMembers
 } from "../../controllers/organization";
 import {
   Organization,
   PublicOrganization,
   Organizations
 } from "../types/organization";
+import { Members } from "../types/member";
 import { FormQuery } from "../types/formQuery";
 
 export default {
@@ -29,6 +31,19 @@ export default {
       async resolve(root: any, params: any, ctx: Koa.Context) {
         // 获取组织
         return true;
+      }
+    },
+    organizationMembers: {
+      type: Members,
+      description: "获取组织公开的成员列表",
+      args: {
+        name: {
+          type: new GraphQLNonNull(GraphQLString)
+        }
+      },
+      async resolve(root: any, params: any, ctx: Koa.Context) {
+        const orgName = params.name;
+        return getPublicOrganizationMembers(orgName);
       }
     },
     organization: {

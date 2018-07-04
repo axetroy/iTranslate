@@ -5,8 +5,6 @@ import sequelize from "../postgres/index";
 import { initQuery, sortMap } from "../utils";
 import { FormQuery$ } from "../graphql/types/formQuery";
 
-import { getUserInfoByName, getUserInfo } from "./user";
-
 export interface createOrganizationArgv$ {
   uid: string; // 操作人
   name: string; // 组织名称
@@ -57,7 +55,7 @@ export async function createOrganization(argv: createOrganizationArgv$) {
     );
 
     // 创建组织成员
-    const member = await OrganizationMemberModel.create(
+    await OrganizationMemberModel.create(
       {
         uid,
         orgId: row.id,
@@ -70,13 +68,17 @@ export async function createOrganization(argv: createOrganizationArgv$) {
 
     await t.commit();
 
-    return row.dataValues;
+    return data;
   } catch (err) {
     await t.rollback();
     throw err;
   }
 }
 
+/**
+ * 更新组织信息
+ * @param argv
+ */
 export async function updateOrganization(argv: UpdateOrganizationArgv$) {
   const { uid, name, description } = argv;
 
@@ -122,6 +124,11 @@ export async function updateOrganization(argv: UpdateOrganizationArgv$) {
   }
 }
 
+/**
+ * 获取组织的细腻d
+ * @param uid
+ * @param name
+ */
 export async function getOrganization(uid: string, name: string) {
   const t: any = await sequelize.transaction();
 
@@ -143,6 +150,10 @@ export async function getOrganization(uid: string, name: string) {
   }
 }
 
+/**
+ * 获取组织公开的信息
+ * @param name
+ */
 export async function getPublicOrganization(name: string) {
   const t: any = await sequelize.transaction();
 
@@ -170,7 +181,7 @@ export async function getPublicOrganization(name: string) {
 
 /**
  * 获取组织公开的信息
- * @param id 
+ * @param id
  */
 export async function getPublicOrganizationById(id: string) {
   const t: any = await sequelize.transaction();
@@ -197,6 +208,12 @@ export async function getPublicOrganizationById(id: string) {
   }
 }
 
+/**
+ * 获取组织列表
+ * @param uid
+ * @param query
+ * @param filter
+ */
 export async function getOrganizations(
   uid: string,
   query: FormQuery$,
@@ -266,6 +283,56 @@ export async function getOperableOrganizations(uid: string) {
     };
     return result;
   } catch (err) {
+    throw err;
+  }
+}
+
+/**
+ * 获取公共的组织成员列表
+ * @param orgName 
+ */
+export async function getPublicOrganizationMembers(orgName: string) {
+  const t = await sequelize.transaction();
+  try {
+    const org: any = await OrganizationModel.findOne({
+      where: {
+        name: orgName,
+        isActive: true
+      },
+      transaction: t
+    });
+
+    if (!org) {
+      throw new Error(`组织不存在`);
+    }
+
+    const result: any = {};
+    const queryResult: any = await OrganizationMemberModel.findAndCountAll({
+      where: {
+        orgId: org.id,
+        isActive: true
+      }
+    });
+    const rows = queryResult.rows || [];
+    const count = queryResult.count || 0;
+    const data = rows.map((row: any) => row.dataValues);
+
+    result.data = data;
+    result.meta = {
+      page: 0,
+      limit: 0,
+      skip: 0,
+      count,
+      num: data.length,
+      sort: [],
+      keyJson: "{}"
+    };
+
+    await t.commit();
+
+    return result;
+  } catch (err) {
+    await t.rollback();
     throw err;
   }
 }
