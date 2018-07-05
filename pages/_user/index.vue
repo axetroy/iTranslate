@@ -116,7 +116,7 @@
           <div class="org-pannel">
             <div class="org-pannel-header"><h4>组织成员</h4></div>
             <div class="org-pannel-body">
-              <div v-for="v in members" :key="v.id">
+              <div v-for="v in members" :key="v.id" class="org-pannel-member">
                 <img class="member-logo" src="https://secure.gravatar.com/avatar/c1234b1cdbb60fc6d988bb97f41c562d?s=290"/>
                 <div class="member-meta">
                   <div class="member-name"><nuxt-link :to="'/' + v.user.username">{{v.user.username}}</nuxt-link></div>
@@ -125,9 +125,9 @@
               </div>
             </div>
             <div class="org-pannel-footer">
-            <el-dialog class="invite-dialog" title="邀请成员加入组织" :visible.sync="inviteDialogVisible" center>
-              <el-form>
-                <el-form-item>
+            <el-dialog class="invite-dialog" title="邀请成员加入组织" :visible.sync="inviteDialogVisible" center @close="onInviteDialogClose">
+              <el-form :model="inviteDialogForm" ref="inviteDialogForm" :rules="inviteFormRules">
+                <el-form-item prop="username" required>
                   <el-autocomplete
                     v-model="inviteDialogForm.username"
                     style="width: 100%"
@@ -296,6 +296,13 @@ $borderColor: #e1e4e8;
       z-index: 999;
       margin: 1.6rem -1.6rem -1.6rem -1.6rem;
     }
+    .org-pannel-member {
+      padding: 1rem 0;
+      border-bottom: 1px solid #eee;
+      &:last-child {
+        border-bottom: 0;
+      }
+    }
   }
 }
 </style>
@@ -312,6 +319,9 @@ $borderColor: #e1e4e8;
 <script>
 import { get } from "lodash";
 
+/**
+ * 获取项目列表
+ */
 function getRepositories(meta) {
   return async function(graphql, owner) {
     const repositoriesResponse = await graphql(
@@ -350,6 +360,71 @@ function getRepositories(meta) {
       "repositories"
     ]);
     return { data, meta: _meta };
+  };
+}
+
+/**
+ * 获取组织的成员列表
+ */
+function getOrgMembers(orgName, meta) {
+  return async function(graphql) {
+    const res = await graphql(
+      `
+        query publicOrgMembers($name: String!) {
+          public {
+            organizationMembers(name: $name) {
+              data {
+                id
+                user {
+                  username
+                  nickname
+                }
+                createdAt
+                updatedAt
+              }
+              meta {
+                limit
+                page
+                count
+                num
+              }
+            }
+          }
+        }
+      `,
+      { name: orgName }
+    );
+
+    const orgMembers = get(res, ["data", "public", "organizationMembers"]);
+
+    const data = get(orgMembers, ["data"]);
+    const meta = get(orgMembers, ["meta"]);
+
+    return { data, meta };
+  };
+}
+
+/**
+ * 获取组织详情
+ */
+function getOrgDetail(orgName) {
+  return async function(graphql) {
+    const res = await graphql(
+      `
+        query getPublicOrg($name: String!) {
+          public {
+            organization(name: $name) {
+              name
+              createdAt
+              updatedAt
+            }
+          }
+        }
+      `,
+      { name: orgName }
+    );
+
+    return get(res, ["data", "public", "organization"]);
   };
 }
 
@@ -398,63 +473,11 @@ export default {
       owner = get(userResponse, ["data", "public", "user"]);
     } else {
       // 获取组织详情
-      const orgResponse = await $graphql(
-        `
-        query getPublicOrg($name: String!){
-          public{
-            organization(name: $name){
-              name
-              createdAt
-              updatedAt
-            }
-          }
-        }
-      `,
-        { name: ownerName }
-      );
+      owner = await getOrgDetail(ownerName)($graphql);
+      const { data, meta } = await getOrgMembers(ownerName)($graphql);
 
-      owner = get(orgResponse, ["data", "public", "organization"]);
-
-      const membersResponse = await $graphql(
-        `
-        query publicOrgMembers($name: String!){
-          public{
-            organizationMembers(name: $name){
-              data{
-                id
-                user{
-                  username
-                  nickname
-                }
-                createdAt
-                updatedAt
-              }
-              meta{
-                limit
-                page
-                count
-                num
-              }
-            }
-          }
-        }
-      `,
-        { name: ownerName }
-      );
-
-      members = get(membersResponse, [
-        "data",
-        "public",
-        "organizationMembers",
-        "data"
-      ]);
-
-      memberMeta = get(membersResponse, [
-        "data",
-        "public",
-        "organizationMembers",
-        "meta"
-      ]);
+      members = data;
+      memberMeta = meta;
     }
 
     // 获取项目列表
@@ -492,6 +515,9 @@ export default {
       inviteDialogForm: {
         username: "",
         user: null
+      },
+      inviteFormRules: {
+        username: [{ required: true, message: "请输入要添加的用户名" }]
       },
       orgMenus: [
         {
@@ -582,13 +608,58 @@ export default {
         );
       });
     },
+    // 当选中邀请的人之后
     onSelectInvateUser({ user }) {
       this.inviteDialogForm.user = user;
     },
-    // 选中邀请的人
+    // 点击邀请
     invitePeople() {
-      // TODO: 表单校验
-      console.log(`邀请 ${this.inviteDialogForm.username}...`);
+      this.$refs.inviteDialogForm.validate(valid => {
+        if (valid) {
+          this.$graphql(
+            `
+        mutation invite($name: String!, $username: String!){
+          me{
+            addMember(name: $name, username: $username){
+              id
+            }
+          }
+        }
+      `,
+            {
+              name: this.owner.name,
+              username: this.inviteDialogForm.username
+            }
+          )
+            .then(() => {
+              this.$success(`添加成功`);
+              this.inviteDialogForm.username = "";
+              this.$refs.inviteDialogForm.resetFields();
+              this.inviteDialogVisible = false;
+
+              // 刷新组织详情
+              getOrgDetail(this.owner.name)(this.$graphql).then(orgInfo => {
+                this.owner = orgInfo;
+              });
+
+              // 刷新组织成员列表
+              getOrgMembers(this.owner.name)(this.$graphql).then(
+                ({ data, meta }) => {
+                  this.members = data;
+                  this.memberMeta = meta;
+                }
+              );
+            })
+            .catch(err => {
+              this.$error(err.message);
+            });
+        }
+      });
+    },
+    // 当窗口管理
+    onInviteDialogClose() {
+      this.inviteDialogForm.username = "";
+      this.$refs.inviteDialogForm.resetFields();
     }
   }
 };

@@ -2,18 +2,14 @@
  * Created by axetroy on 17-7-14.
  */
 
-import {
-  GraphQLBoolean,
-  GraphQLInputObjectType,
-  GraphQLList,
-  GraphQLNonNull,
-  GraphQLString
-} from "graphql";
+import { GraphQLInputObjectType, GraphQLNonNull, GraphQLString } from "graphql";
 import * as Koa from "koa";
 import {
   createOrganization,
-  updateOrganization
+  updateOrganization,
+  inviteMember
 } from "../../controllers/organization";
+import { Member } from "../types/member";
 import { Organization } from "../types/organization";
 
 export default {
@@ -81,6 +77,25 @@ export default {
           name,
           description
         });
+      }
+    },
+    addMember: {
+      type: Member,
+      description: "添加组织成员",
+      args: {
+        name: {
+          type: new GraphQLNonNull(GraphQLString),
+          description: "组织名称"
+        },
+        username: {
+          type: new GraphQLNonNull(GraphQLString),
+          description: "用户名"
+        }
+      },
+      resolve(root: any, { name, username }: any, ctx: Koa.Context) {
+        const token = ctx["token"];
+        const uid = token.uid;
+        return inviteMember(uid, name, username);
       }
     }
   }

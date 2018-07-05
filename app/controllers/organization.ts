@@ -1,4 +1,6 @@
 import * as _ from "lodash";
+import * as Sequelize from "sequelize";
+import UserModel from "../postgres/models/user.model";
 import OrganizationModel from "../postgres/models/organization.model";
 import OrganizationMemberModel from "../postgres/models/organization.member.model";
 import sequelize from "../postgres/index";
@@ -289,7 +291,7 @@ export async function getOperableOrganizations(uid: string) {
 
 /**
  * 获取公共的组织成员列表
- * @param orgName 
+ * @param orgName
  */
 export async function getPublicOrganizationMembers(orgName: string) {
   const t = await sequelize.transaction();
@@ -331,6 +333,92 @@ export async function getPublicOrganizationMembers(orgName: string) {
     await t.commit();
 
     return result;
+  } catch (err) {
+    await t.rollback();
+    throw err;
+  }
+}
+
+/**
+ * 邀请一个用户加入组织
+ * @param uid
+ * @param orgName
+ * @param username
+ */
+export async function inviteMember(
+  uid: string,
+  orgName: string,
+  username: string
+) {
+  const t = await sequelize.transaction();
+
+  console.log(`操作人`, uid);
+  console.log(`组织`, orgName);
+  console.log(`用户名`, username);
+
+  try {
+    const org: any = await OrganizationModel.findOne({
+      where: { name: orgName, isActive: true },
+      transaction: t
+    });
+
+    if (!org) {
+      throw new Error(`组织不存在`);
+    }
+
+    console.log(`找到组织了`);
+
+    // 校验操作者是否拥有权限
+    if (org.owner !== uid) {
+      const role = OrganizationMemberModel.findOne({
+        where: {
+          uid,
+          role: {
+            // 只有管理员和拥有者才有权限添加组织成员
+            [Sequelize.Op.in]: ["owner", "admin"]
+          }
+        },
+        transaction: t
+      });
+      if (!role) {
+        throw new Error("无权限操作");
+      }
+    }
+
+    console.log(`校验权限完毕`);
+
+    const user: any = await UserModel.findOne({
+      where: { username, isActive: true },
+      transaction: t
+    });
+
+    if (!user) {
+      throw new Error(`用户不存在`);
+    }
+
+    const member = await OrganizationMemberModel.findOne({
+      where: { uid: user.uid, isActive: true },
+      transaction: t
+    });
+
+    if (member) {
+      throw new Error("用户已是组织成员");
+    }
+
+    const newMember: any = await OrganizationMemberModel.create(
+      {
+        uid: user.uid,
+        orgId: org.id,
+        role: "member"
+      },
+      { transaction: t }
+    );
+
+    const data = newMember.dataValues;
+
+    await t.commit();
+
+    return data;
   } catch (err) {
     await t.rollback();
     throw err;
