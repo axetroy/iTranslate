@@ -19,7 +19,7 @@
 </template>
 
 <style lang="scss" scoped>
-$width: 990px;
+$width: 99rem;
 
 #content {
   width: $width;

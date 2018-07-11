@@ -90,7 +90,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
-$width: 990px;
+$width: 99rem;
 
 #header {
   height: 6rem;

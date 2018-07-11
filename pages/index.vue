@@ -30,25 +30,125 @@
     </template>
     <!-- 已登陆的情况下 -->
     <template v-else>
-      <UserIndex></UserIndex>
+      <el-row :getter="0">
+        <el-col :span="18">hello</el-col>
+        <el-col :span="6">
+          <el-tabs type="card">
+            <el-tab-pane label="仓库">
+              <el-card>
+                <div slot="header">
+                  <span>我的仓库 <span class="badge">{{repoMeta.count || 0}}</span></span>
+                  <nuxt-link to="/repo/create">
+                    <el-button style="float: right; padding: 3px 0" type="text">+</el-button>
+                  </nuxt-link>
+                </div>
+                <div v-for="repo of repositories" :key="repo.id" class="repo">
+                  <nuxt-link :to="'/' + $store.state.user.username + '/' + repo.name">{{repo.name}}</nuxt-link>
+                </div>
+              </el-card>
+            </el-tab-pane>
+            <el-tab-pane label="组织">
+              <el-card>
+                <div slot="header">
+                  <span>我的组织 <span class="badge">{{orgsMeta.count || 0}}</span></span>
+                  <nuxt-link to="/org/create">
+                    <el-button style="float: right; padding: 3px 0" type="text">+</el-button>
+                  </nuxt-link>
+                </div>
+                <div v-for="org of orgs" :key="org.id" class="repo">
+                  <nuxt-link :to="'/' + org.name">{{org.name}}</nuxt-link>
+                </div>
+              </el-card>
+            </el-tab-pane>
+          </el-tabs>
+        </el-col>
+      </el-row>
     </template>
   </div>
 </template>
 
 <script>
-import AppLogo from "~/components/AppLogo.vue";
-import UserIndex from "~/components/UserIndex.vue";
+import { get } from "lodash";
+
+function getRepositories() {
+  return async function(graphql) {
+    const data = await graphql(`
+      query repo {
+        me {
+          repositories(query: { limit: 10 }) {
+            data {
+              name
+              description
+              isPrivate
+              readme
+            }
+            meta {
+              count
+            }
+          }
+        }
+      }
+    `);
+    const entity = get(data, ["data", "me", "repositories"]);
+    const repositories = get(entity, ["data"]);
+    const meta = get(entity, ["meta"]);
+    return { repositories, meta };
+  };
+}
+
+function getOrgs() {
+  return async function(graphql) {
+    const data = await graphql(`
+      query repo {
+        me {
+          organizations(query: { limit: 10 }) {
+            data {
+              id
+              name
+              description
+            }
+            meta {
+              count
+            }
+          }
+        }
+      }
+    `);
+    const organizations = get(data, ["data", "me", "organizations", "data"]);
+    const meta = get(data, ["data", "me", "organizations", "meta"]);
+    return { organizations, meta };
+  };
+}
 
 export default {
-  components: {
-    AppLogo,
-    UserIndex
+  data() {
+    return {
+      repositories: [],
+      repoMeta: {},
+      orgs: [],
+      orgsMeta: {}
+    };
+  },
+  async asyncData({ store, $graphql }) {
+    if (store.state.user) {
+      const [
+        { repositories, meta: repoMeta },
+        { organizations, meta: orgsMeta }
+      ] = await Promise.all([getRepositories()($graphql), getOrgs()($graphql)]);
+
+      return {
+        repositories,
+        orgs: organizations,
+        repoMeta,
+        orgsMeta
+      };
+    }
   }
 };
 </script>
 
 <style scoped lang="scss">
-$width: 990px;
+$width: 99rem;
 
 #content {
   width: $width;
@@ -73,5 +173,23 @@ $width: 990px;
       line-height: 3rem;
     }
   }
+}
+
+.repo {
+  padding: 1rem 0.5rem;
+  &:hover {
+    background-color: #e5e5e5;
+  }
+}
+
+.badge {
+  padding: 4px 5px;
+  margin-top: -4px;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+  background-color: #767676;
+  border-color: #767676;
+  color: #fff;
+  border-radius: 0.5rem;
 }
 </style>

@@ -1,83 +1,63 @@
 <template>
   <div>
+    <!-- 如果是组织的项目，则显示 -->
+    <panel title="默认仓库权限">
+      <p>团队的默认权限为只读，团队每一个成员都有读权限.</p>
+      <p>您可以在此组织的成员权限页面上更改或删除默认存储库权限设置。</p>
+    </panel>
 
     <!-- 如果是组织的项目，则显示 -->
-    <div class="pannel">
-      <div class="pannel-header">
-        <p class="pannel-title">默认仓库权限</p>
-      </div>
-      <div class="pannel-content">
-        <p>团队的默认权限为只读，团队每一个成员都有读权限.</p>
-        <p>您可以在此组织的成员权限页面上更改或删除默认存储库权限设置。</p>
-      </div>
-    </div>
-
-    <!-- 如果是组织的项目，则显示 -->
-    <div class="pannel">
-      <div class="pannel-header">
-        <p class="pannel-title">团队</p>
-      </div>
-      <div class="pannel-content">
-        <div>
-         现在还没有任何团队有权限访问这个项目，请在下方添加。
-        </div>
-      </div>
-    </div>
+    <panel title="团队">
+      <p>现在还没有任何团队有权限访问这个项目，请在下方添加。</p>
+    </panel>
 
     <!-- 总是显示 -->
-    <div class="pannel">
-      <div class="pannel-header">
-        <p class="pannel-title">合作者</p>
-      </div>
-      <div class="pannel-content">
-
-        <div class="collaboration-list">
-          <el-row v-for="v in collaborators" :key="v.id" class="collaboration-item">
-            <el-col :span="6">
-              <nuxt-link :to="'/' + v.user.username" class="collaboration-name">{{v.user.username}}</nuxt-link>
+    <panel title="合作者">
+      <div class="collaboration-list">
+        <el-row v-for="v in collaborators" :key="v.id" class="collaboration-item">
+          <el-col :span="6">
+            <nuxt-link :to="'/' + v.user.username" class="collaboration-name">{{v.user.username}}</nuxt-link>
+          </el-col>
+          <el-col :span="14">
+            <el-select v-model="v.role" placeholder="请选择" style="width:100px" @change="changeRole(v.user.uid, v.role)">
+              <el-option
+                v-for="role in roles" :key="role.value"
+                :label="role.label"
+                :disabled="v.user.uid === repo.owner"
+                :value="role.value">
+              </el-option>
+            </el-select>
+            <span v-for="role in roles" :key="role.value" v-if="role.value===v.role" class="role-desc">
+              {{role.description}}
+            </span>
             </el-col>
-            <el-col :span="14">
-              <el-select v-model="v.role" placeholder="请选择" style="width:100px" @change="changeRole(v.user.uid, v.role)">
-                <el-option
-                  v-for="role in roles" :key="role.value"
-                  :label="role.label"
-                  :disabled="v.user.uid === repo.owner"
-                  :value="role.value">
-                </el-option>
-              </el-select>
-              <span v-for="role in roles" :key="role.value" v-if="role.value===v.role" class="role-desc">
-                {{role.description}}
-              </span>
-              </el-col>
-            <el-col :span="4"><span class="el-icon-remove collaboration-remove" @click="removeRole(v.user.uid)"></span></el-col>
-          </el-row>
-        </div>
-
-        <div class="collaboration-add">
-          <div class="collaboration-add-meta">
-            你可以输入用户名来搜索用户，或者输入邮箱匹配
-          </div>
-          <el-form ref="collaboration" :model="collaboration" :inline="true">
-            <el-form-item required style="width:100%">
-              <el-row>
-                <el-col :span="20">
-                  <el-autocomplete
-                    v-model="collaboration.username"
-                    :fetch-suggestions="querySearchAsync"
-                    placeholder="请搜索用户名"
-                    style="width:100%"
-                  />
-                </el-col>
-                <el-col :span="4">
-                 <el-button type="primary" @click="addCollaboration">添加协作者</el-button>
-                </el-col>
-              </el-row>
-            </el-form-item>
-          </el-form>
-        </div>
-
+          <el-col :span="4"><span class="el-icon-remove collaboration-remove" @click="removeRole(v.user.uid)"></span></el-col>
+        </el-row>
       </div>
-    </div>
+
+      <div class="collaboration-add">
+        <div class="collaboration-add-meta">
+          你可以输入用户名来搜索用户，或者输入邮箱匹配
+        </div>
+        <el-form ref="collaboration" :model="collaboration" :inline="true">
+          <el-form-item required style="width:100%">
+            <el-row>
+              <el-col :span="20">
+                <el-autocomplete
+                  v-model="collaboration.username"
+                  :fetch-suggestions="querySearchAsync"
+                  placeholder="请搜索用户名"
+                  style="width:100%"
+                />
+              </el-col>
+              <el-col :span="4">
+                <el-button type="primary" @click="addCollaboration">添加协作者</el-button>
+              </el-col>
+            </el-row>
+          </el-form-item>
+        </el-form>
+      </div>
+    </panel>
   </div>
 </template>
 

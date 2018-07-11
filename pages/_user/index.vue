@@ -156,7 +156,7 @@
 </template>
 
 <style lang="scss" scoped>
-$width: 990px;
+$width: 99rem;
 $borderColor: #e1e4e8;
 
 #content {

@@ -28,21 +28,8 @@
   </div>
 </template>
 
-<script>
-import AppLogo from "~/components/AppLogo.vue";
-
-export default {
-  components: {
-    AppLogo
-  },
-  data() {
-    return {};
-  }
-};
-</script>
-
 <style scoped lang="scss">
-$width: 990px;
+$width: 99rem;
 
 #content {
   width: $width;

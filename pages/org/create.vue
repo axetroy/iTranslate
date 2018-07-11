@@ -72,7 +72,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
-$width: 990px;
+$width: 99rem;
 
 #content {
   width: $width;

@@ -1,6 +1,8 @@
 <template>
   <div>
-    钩子管理
+    <panel title="钩子管理">
+      coming soon...
+    </panel>
   </div>
 </template>
 
