@@ -6,26 +6,26 @@
           <h3>创建新的仓库</h3>
         </el-form-item>
         <el-form-item label="拥有者" required>
-          <el-select v-model="form.owner" placeholder="请选择">
-            <el-option :value="me.uid" :label="me.username"/>
-            <el-option
-              v-for="v in organizations"
-              :key="v.id"
-              :label="v.name"
-              :value="v.id">
-            </el-option>
-          </el-select>
+          <el-col :span="8">
+            <el-select v-model="form.owner" placeholder="请选择">
+              <el-option :value="me.uid" :label="me.username"/>
+              <el-option
+                v-for="v in organizations"
+                :key="v.id"
+                :label="v.name"
+                :value="v.id">
+              </el-option>
+            </el-select>
+          </el-col>
+          <el-col class="line text-center" :span="1">/</el-col>
+          <el-col :span="15">
+            <el-input v-model="form.name"></el-input>
+          </el-col>
         </el-form-item>
         
         <el-form-item label="是否可见" required>
           <el-radio v-model="form.visible" :label="true">可见</el-radio>
           <el-radio v-model="form.visible" :label="false">不可见</el-radio>
-          <div>我们建议开源你的翻译方案</div>
-        </el-form-item>
-
-        <el-form-item label="仓库名称" required>
-          <el-input v-model="form.name"></el-input>
-          <div>伟大的仓库名称一般都较短、令人深刻并且 独一无二 的。</div>
         </el-form-item>
         <el-form-item label="仓库描述" required>
           <el-input v-model="form.desc"></el-input>

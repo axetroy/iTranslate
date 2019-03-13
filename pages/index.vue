@@ -3,27 +3,35 @@
     <!-- 未登陆的情况下 -->
     <template v-if="!$store.state.user">
       <div style="text-align:center">
-        <img src="http://111.230.30.41/img/favicon.png" alt="">
+        <img src="http://111.230.30.41/img/favicon.png" alt>
         <h1>I18n</h1>
         <h2>一款极易搭建的 I18n 自助服务</h2>
       </div>
       <el-row :gutter="8">
         <el-col :span="12" class="feat-row">
-          <h3><img src="/img/rocket.png">易安装</h3>
+          <h3>
+            <img src="/img/rocket.png">易安装
+          </h3>
           <p>任何 NodeJS 环境都可以运行，支持多个版本. 还可以通过 Docker 一件安装</p>
         </el-col>
         <el-col :span="12" class="feat-row">
-          <h3><img src="/img/computer.png">跨平台</h3>
+          <h3>
+            <img src="/img/computer.png">跨平台
+          </h3>
           <p>任何 NodeJS 语言 支持的平台都可以运行, Windows、Mac、Linux 以及 ARM。</p>
         </el-col>
       </el-row>
       <el-row :gutter="8">
         <el-col :span="12" class="feat-row">
-          <h3><img src="/img/rocket.png">轻量级</h3>
+          <h3>
+            <img src="/img/rocket.png">轻量级
+          </h3>
           <p>I18n 基于NodeJS开发，只占用了少量的内存, 一个小巧的树莓派都可以运行.</p>
         </el-col>
         <el-col :span="12" class="feat-row">
-          <h3><img src="/img/github.png">开源化</h3>
+          <h3>
+            <img src="/img/github.png">开源化
+          </h3>
           <p>全代码开源在Github上，你可以放心使用，甚至可以不经过我的同意，安装在你们公司内网中。</p>
         </el-col>
       </el-row>
@@ -37,7 +45,9 @@
             <el-tab-pane label="仓库">
               <el-card>
                 <div slot="header">
-                  <span>我的仓库 <span class="badge">{{repoMeta.count || 0}}</span></span>
+                  <span>我的仓库
+                    <span class="badge">{{repoMeta.count || 0}}</span>
+                  </span>
                   <nuxt-link to="/repo/create">
                     <el-button style="float: right; padding: 3px 0" type="text">+</el-button>
                   </nuxt-link>
@@ -50,7 +60,9 @@
             <el-tab-pane label="组织">
               <el-card>
                 <div slot="header">
-                  <span>我的组织 <span class="badge">{{orgsMeta.count || 0}}</span></span>
+                  <span>我的组织
+                    <span class="badge">{{orgsMeta.count || 0}}</span>
+                  </span>
                   <nuxt-link to="/org/create">
                     <el-button style="float: right; padding: 3px 0" type="text">+</el-button>
                   </nuxt-link>
@@ -183,10 +195,9 @@ $width: 99rem;
 }
 
 .badge {
-  padding: 4px 5px;
+  padding: 0px 10px;
   margin-top: -4px;
   margin-left: 0.5rem;
-  vertical-align: middle;
   background-color: #767676;
   border-color: #767676;
   color: #fff;

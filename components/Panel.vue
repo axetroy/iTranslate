@@ -1,7 +1,8 @@
 <template>
   <div :class="'panel' + ' ' + type">
     <div class="panel-header">
-      <p class="panel-title">{{title}}</p>
+      <p v-if="title" class="panel-title">{{title}}</p>
+      <slot v-else name="header"></slot>
     </div>
     <div class="panel-content">
       <slot></slot>

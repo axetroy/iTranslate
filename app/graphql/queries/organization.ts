@@ -39,11 +39,15 @@ export default {
       args: {
         name: {
           type: new GraphQLNonNull(GraphQLString)
+        },
+        query: {
+          name: "query",
+          type: new GraphQLNonNull(FormQuery)
         }
       },
       async resolve(root: any, params: any, ctx: Koa.Context) {
         const orgName = params.name;
-        return getPublicOrganizationMembers(orgName);
+        return getPublicOrganizationMembers(orgName, params.query);
       }
     },
     organization: {

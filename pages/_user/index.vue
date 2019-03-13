@@ -1,26 +1,26 @@
 <template>
   <div id="content">
-    <el-row v-if="isUser" :gutter="0">
+    <el-row class="user" v-if="isUser" :gutter="0">
       <el-col :span="6" class="user-info">
-        <div><img class="avatar" src="https://secure.gravatar.com/avatar/c1234b1cdbb60fc6d988bb97f41c562d?s=290" alt=""></div>
+        <div>
+          <img
+            class="avatar"
+            src="https://secure.gravatar.com/avatar/c1234b1cdbb60fc6d988bb97f41c562d?s=290"
+            alt
+          >
+        </div>
         <div class="meta-block">
           <div class="name-block">
             <span class="username">{{owner.username}}</span>
             <span class="nickname">{{owner.nickname}}</span>
           </div>
 
-          <div class="desc">
-            Fool Stand Developer
-          </div>
-
-          <el-button class="edit-info">编辑</el-button>
+          <div class="desc">Fool Stand Developer</div>
         </div>
         <div class="meta-block">
           <ul>
             <li class="v-detail">{{owner.email}}</li>
-            <li class="v-detail">http://axetroy.xyz</li>
             <li class="v-detail">加入于 {{owner.createdAt | date}}</li>
-            <li class="v-detail">0 关注着 - 0 关注中</li>
           </ul>
         </div>
       </el-col>
@@ -31,7 +31,7 @@
           </el-form-item>
           <el-form-item>
             <el-select v-model="form.type" placeholder="请选择类型">
-              <el-option label="全部" value=""></el-option>
+              <el-option label="全部" value></el-option>
               <el-option label="原创" value="source"></el-option>
               <el-option label="克隆" value="fork"></el-option>
               <el-option label="镜像" value="mirror"></el-option>
@@ -48,9 +48,9 @@
           <div class="repository-item repository-desc">
             <p>{{v.description}}</p>
           </div>
-          <div class="repository-item repository-meta">
-            创建于 {{v.createdAt | timeago}} 更新于 {{v.updatedAt | timeago}}
-          </div>
+          <div
+            class="repository-item repository-meta"
+          >创建于 {{v.createdAt | timeago}} 更新于 {{v.updatedAt | timeago}}</div>
         </div>
         <div class="pagination">
           <el-pagination
@@ -60,97 +60,130 @@
             :current-page="meta.page + 1"
             :pager-count="11"
             :page-size="meta.limit"
-            :total="meta.count">
-          </el-pagination>
+            :total="meta.count"
+          ></el-pagination>
         </div>
       </el-col>
     </el-row>
     <el-row class="org" v-else :gutter="0">
-      <div class="org-header">
-        <div class="logo">
-          <img class="avatar" src="https://secure.gravatar.com/avatar/c1234b1cdbb60fc6d988bb97f41c562d?s=290" alt="">
-        </div>
-        <div class="org-meta">
-          <div>{{owner.name}}</div>
-          <div>这是组织描述</div>
-          <div class="org-detail">
-            <span>上海</span>
-            <span>http://example.com</span>
-            <span>email@example.com</span>
+      <div class="org-header-wrap">
+        <div class="org-header">
+          <div class="logo">
+            <img
+              class="avatar"
+              src="https://secure.gravatar.com/avatar/c1234b1cdbb60fc6d988bb97f41c562d?s=290"
+              alt
+            >
+          </div>
+          <div class="org-meta">
+            <div>{{owner.name}}</div>
+            <div>这是组织描述</div>
+            <div class="org-detail">
+              <span>上海</span>
+              <span>http://example.com</span>
+              <span>email@example.com</span>
+            </div>
+          </div>
+          <div class="org-nav-wrap">
+            <div class="org-nav-list">
+              <nuxt-link
+                :class="'org-nav-item' + (menu.path==='' ? ' selected' : '')"
+                v-for="menu in orgMenus"
+                :key="menu.name"
+                :index="menu.path"
+                :to="menu.prefix + '/' + $route.params.user + menu.path"
+              >{{menu.title}}</nuxt-link>
+            </div>
           </div>
         </div>
       </div>
-      <div>
-        <el-menu mode="horizontal" :default-active="$route.path" :unique-opened="true">
-          <el-menu-item v-for="menu in orgMenus" :key="menu.name" :index="'/admin/dragonB' + menu.path">
-            <nuxt-link :to="menu.prefix + '/' + owner.name + menu.path">{{menu.title}}</nuxt-link>
-          </el-menu-item>
-        </el-menu>
-      </div>
-      <el-col :span="18" class="content">
-        <div v-for="v in publicRepositories" :key="v.id" class="repository">
-          <div class="repository-item repository-info">
-            <nuxt-link :to="'/' + owner.name + '/' + v.name">{{v.name}}</nuxt-link>
+
+      <div class="org-content-wrap">
+        <el-col :span="18" class="content">
+          <div v-for="v in publicRepositories" :key="v.id" class="repository">
+            <div class="repository-item repository-info">
+              <nuxt-link :to="'/' + owner.name + '/' + v.name">{{v.name}}</nuxt-link>
+            </div>
+            <div class="repository-item repository-desc">
+              <p>{{v.description}}</p>
+            </div>
+            <div
+              class="repository-item repository-meta"
+            >创建于 {{v.createdAt | timeago}} 更新于 {{v.updatedAt | timeago}}</div>
           </div>
-          <div class="repository-item repository-desc">
-            <p>{{v.description}}</p>
+          <div class="pagination">
+            <el-pagination
+              @current-change="changePage"
+              background
+              layout="prev, pager, next"
+              :current-page="meta.page + 1"
+              :pager-count="11"
+              :page-size="meta.limit"
+              :total="meta.count"
+            ></el-pagination>
           </div>
-          <div class="repository-item repository-meta">
-            创建于 {{v.createdAt | timeago}} 更新于 {{v.updatedAt | timeago}}
-          </div>
-        </div>
-        <div class="pagination">
-          <el-pagination
-            @current-change="changePage"
-            background
-            layout="prev, pager, next"
-            :current-page="meta.page + 1"
-            :pager-count="11"
-            :page-size="meta.limit"
-            :total="meta.count">
-          </el-pagination>
-        </div>
-      </el-col>
-      <el-col :span="6">
-        <div class="org-box">
-          <div class="org-pannel">
-            <div class="org-pannel-header"><h4>组织成员</h4></div>
-            <div class="org-pannel-body">
-              <div v-for="v in members" :key="v.id" class="org-pannel-member">
-                <img class="member-logo" src="https://secure.gravatar.com/avatar/c1234b1cdbb60fc6d988bb97f41c562d?s=290"/>
-                <div class="member-meta">
-                  <div class="member-name"><nuxt-link :to="'/' + v.user.username">{{v.user.username}}</nuxt-link></div>
-                  <div class="member-nickname">{{v.user.nickname}}</div>
+        </el-col>
+        <el-col :span="6">
+          <div class="org-box">
+            <div class="org-pannel">
+              <div class="org-pannel-header">
+                <h4>组织成员</h4>
+              </div>
+              <div class="org-pannel-body">
+                <div v-for="v in members" :key="v.id" class="org-pannel-member">
+                  <img
+                    class="member-logo"
+                    src="https://secure.gravatar.com/avatar/c1234b1cdbb60fc6d988bb97f41c562d?s=290"
+                  >
+                  <div class="member-meta">
+                    <div class="member-name">
+                      <nuxt-link :to="'/' + v.user.username">{{v.user.username}}</nuxt-link>
+                    </div>
+                    <div class="member-nickname">{{v.user.nickname}}</div>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div class="org-pannel-footer">
-            <el-dialog class="invite-dialog" title="邀请成员加入组织" :visible.sync="inviteDialogVisible" center @close="onInviteDialogClose">
-              <el-form :model="inviteDialogForm" ref="inviteDialogForm" :rules="inviteFormRules">
-                <el-form-item prop="username" required>
-                  <el-autocomplete
-                    v-model="inviteDialogForm.username"
-                    style="width: 100%"
-                    value-key="value"
-                    value="user"
-                    :fetch-suggestions="querySearchAsync"
-                    :trigger-on-focus="false"
-                    @select="onSelectInvateUser"
-                    placeholder="请输入用户名搜索用户"
+              <div class="org-pannel-footer">
+                <el-dialog
+                  class="invite-dialog"
+                  title="邀请成员加入组织"
+                  :visible.sync="inviteDialogVisible"
+                  center
+                  @close="onInviteDialogClose"
+                >
+                  <el-form
+                    :model="inviteDialogForm"
+                    ref="inviteDialogForm"
+                    :rules="inviteFormRules"
                   >
-                    <!-- <template slot="prepend">user</template> -->
-                    <template slot="append">
-                      <div style="cursor: pointer;" @click="invitePeople(inviteDialogForm.username)">邀请</div>
-                    </template>
-                  </el-autocomplete>
-                </el-form-item>
-              </el-form>
-            </el-dialog>
-              <el-button size="small" @click="invite">邀请成员</el-button>
+                    <el-form-item prop="username" required>
+                      <el-autocomplete
+                        v-model="inviteDialogForm.username"
+                        style="width: 100%"
+                        value-key="value"
+                        value="user"
+                        :fetch-suggestions="querySearchAsync"
+                        :trigger-on-focus="false"
+                        @select="onSelectInvateUser"
+                        placeholder="请输入用户名搜索用户"
+                      >
+                        <!-- <template slot="prepend">user</template> -->
+                        <template slot="append">
+                          <div
+                            style="cursor: pointer;"
+                            @click="invitePeople(inviteDialogForm.username)"
+                          >邀请</div>
+                        </template>
+                      </el-autocomplete>
+                    </el-form-item>
+                  </el-form>
+                </el-dialog>
+                <el-button size="small" @click="invite">邀请成员</el-button>
+              </div>
             </div>
           </div>
-        </div>
-      </el-col>
+        </el-col>
+      </div>
     </el-row>
   </div>
 </template>
@@ -160,7 +193,12 @@ $width: 99rem;
 $borderColor: #e1e4e8;
 
 #content {
-  width: $width;
+  margin: 0 auto;
+  margin-top: 2rem;
+}
+
+.user {
+  max-width: 82rem;
   margin: 0 auto;
 }
 
@@ -206,6 +244,11 @@ $borderColor: #e1e4e8;
   }
 }
 
+.org-content-wrap {
+  width: $width;
+  margin: 0 auto;
+}
+
 .content {
   padding: 1rem;
   .search-block {
@@ -223,6 +266,9 @@ $borderColor: #e1e4e8;
     .repository-item {
       margin: 1rem;
     }
+    .repository-meta {
+      font-size: 14px;
+    }
     .repository-desc {
       color: #586069;
       font-size: 1.2rem;
@@ -235,8 +281,18 @@ $borderColor: #e1e4e8;
   .logo {
     display: inline-block;
   }
+  .org-header-wrap {
+    background-color: #fafbfc;
+    border-bottom: 1px solid #eee;
+    padding-top: 20px;
+    padding-bottom: 0;
+    margin-bottom: 20px;
+  }
   .org-header {
+    width: $width;
+    margin: 0 auto;
     font-size: 0;
+    color: #666;
   }
   .logo {
     font-size: 1.6rem;
@@ -305,6 +361,35 @@ $borderColor: #e1e4e8;
     }
   }
 }
+
+.org-nav-wrap {
+  font-size: 1.5rem;
+  margin-top: 2rem;
+  .org-nav-list {
+    position: relative;
+    top: 1px;
+    &::after {
+      content: "";
+      display: block;
+      clear: both;
+    }
+    a {
+      float: left;
+      padding: 8px 15px 11px;
+      color: #586069;
+      white-space: nowrap;
+      border: solid transparent;
+      border-width: 3px 1px 1px;
+      border-radius: 3px 3px 0 0;
+      &.selected {
+        font-weight: 600;
+        color: #24292e;
+        background-color: #fff;
+        border-color: #e36209 #e1e4e8 transparent;
+      }
+    }
+  }
+}
 </style>
 
 <style lang="less">
@@ -366,13 +451,13 @@ function getRepositories(meta) {
 /**
  * 获取组织的成员列表
  */
-function getOrgMembers(orgName, meta) {
+function getOrgMembers(orgName, _meta) {
   return async function(graphql) {
     const res = await graphql(
       `
-        query publicOrgMembers($name: String!) {
+        query publicOrgMembers($name: String!, $query: FormQuery!) {
           public {
-            organizationMembers(name: $name) {
+            organizationMembers(name: $name, query: $query) {
               data {
                 id
                 user {
@@ -392,7 +477,13 @@ function getOrgMembers(orgName, meta) {
           }
         }
       `,
-      { name: orgName }
+      {
+        name: orgName,
+        query: {
+          limit: _meta.limit,
+          page: _meta.page
+        }
+      }
     );
 
     const orgMembers = get(res, ["data", "public", "organizationMembers"]);
@@ -474,7 +565,10 @@ export default {
     } else {
       // 获取组织详情
       owner = await getOrgDetail(ownerName)($graphql);
-      const { data, meta } = await getOrgMembers(ownerName)($graphql);
+      const { data, meta } = await getOrgMembers(ownerName, {
+        limit: 10,
+        page: 0
+      })($graphql);
 
       members = data;
       memberMeta = meta;
@@ -524,19 +618,20 @@ export default {
           name: "Repositories",
           prefix: "",
           path: "",
-          title: "项目"
+
+          title: "项 目"
         },
         {
           name: "People",
           prefix: "/org",
           path: "/people",
-          title: "成员"
+          title: "成 员"
         },
         {
           name: "Setting",
           prefix: "/org",
           path: "/setting",
-          title: "设置"
+          title: "设 置"
         }
       ],
       members: [],

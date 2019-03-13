@@ -127,7 +127,7 @@ export async function updateOrganization(argv: UpdateOrganizationArgv$) {
 }
 
 /**
- * 获取组织的细腻d
+ * 获取组织的信息
  * @param uid
  * @param name
  */
@@ -293,7 +293,11 @@ export async function getOperableOrganizations(uid: string) {
  * 获取公共的组织成员列表
  * @param orgName
  */
-export async function getPublicOrganizationMembers(orgName: string) {
+export async function getPublicOrganizationMembers(
+  orgName: string,
+  query: FormQuery$
+) {
+  const { page, limit, skip, sort, keyJson, songo } = initQuery(query);
   const t = await sequelize.transaction();
   try {
     const org: any = await OrganizationModel.findOne({
@@ -310,7 +314,11 @@ export async function getPublicOrganizationMembers(orgName: string) {
 
     const result: any = {};
     const queryResult: any = await OrganizationMemberModel.findAndCountAll({
+      limit,
+      offset: limit * page,
+      order: sortMap(sort),
       where: {
+        ...songo,
         orgId: org.id,
         isActive: true
       }
@@ -321,8 +329,8 @@ export async function getPublicOrganizationMembers(orgName: string) {
 
     result.data = data;
     result.meta = {
-      page: 0,
-      limit: 0,
+      page,
+      limit,
       skip: 0,
       count,
       num: data.length,
@@ -352,10 +360,6 @@ export async function inviteMember(
 ) {
   const t = await sequelize.transaction();
 
-  console.log(`操作人`, uid);
-  console.log(`组织`, orgName);
-  console.log(`用户名`, username);
-
   try {
     const org: any = await OrganizationModel.findOne({
       where: { name: orgName, isActive: true },
@@ -365,8 +369,6 @@ export async function inviteMember(
     if (!org) {
       throw new Error(`组织不存在`);
     }
-
-    console.log(`找到组织了`);
 
     // 校验操作者是否拥有权限
     if (org.owner !== uid) {
@@ -385,8 +387,6 @@ export async function inviteMember(
       }
     }
 
-    console.log(`校验权限完毕`);
-
     const user: any = await UserModel.findOne({
       where: { username, isActive: true },
       transaction: t
@@ -397,7 +397,7 @@ export async function inviteMember(
     }
 
     const member = await OrganizationMemberModel.findOne({
-      where: { uid: user.uid, isActive: true },
+      where: { uid: user.uid, orgId: org.id, isActive: true },
       transaction: t
     });
 

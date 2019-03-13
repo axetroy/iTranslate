@@ -1,11 +1,13 @@
-FROM node:8-alpine
+FROM node:8.12.0-alpine
+
+RUN npm config set registry https://registry.npm.taobao.org \
+    && npm install pm2 -g \
+    && apk add python
 
 USER node
 
-RUN npm install pm2 -g
-
-RUN mkdir -p /home/node/app
-RUN chown node /home/node/app
+RUN mkdir -p /home/node/app \
+    && chown node /home/node/app
 
 WORKDIR /home/node/app
 

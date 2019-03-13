@@ -61,7 +61,8 @@ module.exports = {
     { src: "~plugins/graphql", ssr: true },
     { src: "~plugins/date-filter", ssr: true },
     { src: "~plugins/timeago", ssr: true },
-    { src: "~plugins/component", ssr: true }
+    { src: "~plugins/component", ssr: true },
+    { src: "~plugins/first-uppercase", ssr: true }
   ],
   css: ["~assets/css/main.css"]
 };

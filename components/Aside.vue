@@ -60,9 +60,6 @@ export default {
       default: [],
       required: false
     }
-  },
-  mounted() {
-    console.log(`组件已运行`);
   }
 };
 </script>
